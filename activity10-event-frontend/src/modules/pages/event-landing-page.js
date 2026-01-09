@@ -1,15 +1,17 @@
+
 import React from "react";
+import Header from "../../components/Header";
+
 
 const EventLandingPage = () => {
   return (
     <div
-      className="min-h-screen flex justify-center py-8 px-4 font-medium uppercase"
-      style={{
-        backgroundColor: "var(--bg-main)",
-        color: "var(--text-primary)",
-      }}
+      className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]"
     >
-      attendee landing page
+      <Header />
+      <div className="flex-1 flex justify-center items-center py-8 px-4 font-medium">
+        attendee landing page
+      </div>
     </div>
   );
 };

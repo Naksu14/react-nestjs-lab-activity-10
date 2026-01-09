@@ -13,12 +13,14 @@ export class EventUsersService {
     private usersRepository: Repository<EventUser>,
   ) {}
 
+  // Get all users
   async getAllUsers(): Promise<EventUser[]> {
     return this.usersRepository.find({
       select: ['id', 'email', 'firstname', 'lastname', 'isActive'],
     });
   }
 
+  // Get current authenticated user
   async getUserById(id: number): Promise<EventUser | null> {
     return this.usersRepository.findOne({
       where: { id },
@@ -26,6 +28,7 @@ export class EventUsersService {
     });
   }
 
+  // Create a new user
   async create(createUserDto: CreateEventUserDto): Promise<EventUser> {
     const { password, ...userData } = createUserDto;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -49,17 +52,19 @@ export class EventUsersService {
     }
   }
 
+  // Update current authenticated user
   async updateUser(
     id: number,
-    updateData: Partial<EventUser>,
+    updateEventUserDto: Partial<EventUser>,
   ): Promise<EventUser | null> {
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
+    if (updateEventUserDto.password) {
+      updateEventUserDto.password = await bcrypt.hash(updateEventUserDto.password, 10);
     }
-    await this.usersRepository.update(id, updateData);
+    await this.usersRepository.update(id, updateEventUserDto);
     return this.usersRepository.findOneBy({ id });
   }
 
+  // Delete user by ID
   async deleteUser(id: number): Promise<void> {
     await this.usersRepository.delete(id);
   }

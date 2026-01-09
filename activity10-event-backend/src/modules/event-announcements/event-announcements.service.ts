@@ -1,26 +1,64 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateEventAnnouncementDto } from './dto/create-event-announcement.dto';
 import { UpdateEventAnnouncementDto } from './dto/update-event-announcement.dto';
+import { EventAnnouncement } from './entities/event-announcement.entity';
+import { Event } from '../events/entities/event.entity';
 
 @Injectable()
 export class EventAnnouncementsService {
-  create(createEventAnnouncementDto: CreateEventAnnouncementDto) {
-    return 'This action adds a new eventAnnouncement';
+  constructor(
+    @InjectRepository(EventAnnouncement)
+    private readonly eventAnnouncementsRepository: Repository<EventAnnouncement>,
+    @InjectRepository(Event)
+    private readonly eventsRepository: Repository<Event>,
+  ) {}
+
+  // Create a new event announcement
+  async create(createEventAnnouncementDto: CreateEventAnnouncementDto) {
+    const event = await this.eventsRepository.findOneBy({
+      id: createEventAnnouncementDto.event_id,
+    });
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const eventAnnouncement = this.eventAnnouncementsRepository.create(
+      createEventAnnouncementDto,
+    );
+    return this.eventAnnouncementsRepository.save(eventAnnouncement);
   }
 
-  findAll() {
-    return `This action returns all eventAnnouncements`;
+  // Get all event announcements
+  async findAll() {
+    return this.eventAnnouncementsRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} eventAnnouncement`;
+  // Get a single event announcement by ID
+  async findOne(id: number): Promise<EventAnnouncement> {
+    const announcement = await this.eventAnnouncementsRepository.findOneBy({
+      id,
+    });
+    if (!announcement) {
+      throw new NotFoundException(`Event announcement with id ${id} not found`);
+    }
+    return announcement;
   }
 
-  update(id: number, updateEventAnnouncementDto: UpdateEventAnnouncementDto) {
-    return `This action updates a #${id} eventAnnouncement`;
+  // Update an event announcement
+  async update(
+    id: number,
+    updateEventAnnouncementDto: UpdateEventAnnouncementDto,
+  ) {
+    const eventAnnouncement = await this.findOne(id);
+    Object.assign(eventAnnouncement, updateEventAnnouncementDto);
+    return this.eventAnnouncementsRepository.save(eventAnnouncement);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} eventAnnouncement`;
+  // Delete an event announcement
+  async remove(id: number) {
+    const eventAnnouncement = await this.findOne(id);
+    return this.eventAnnouncementsRepository.remove(eventAnnouncement);
   }
 }

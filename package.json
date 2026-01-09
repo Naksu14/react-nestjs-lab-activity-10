@@ -10,7 +10,9 @@
     "@nestjs/mapped-types": "*",
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-query-devtools": "^5.91.2",
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "qrcode.react": "^4.2.0",
+    "react-qr-reader": "^3.0.0-beta-1"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

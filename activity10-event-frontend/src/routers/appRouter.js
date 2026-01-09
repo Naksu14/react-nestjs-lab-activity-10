@@ -5,9 +5,9 @@ import Signup from "../modules/auth/signup";
 import ForgotPassword from "../modules/auth/forgotpassword";
 import AuthGuard from "../components/AuthGuard";
 import GuestGuard from "../components/GuestGuard";
-import EventLandingPage from "../modules/pages/event-landing-page";
-import EventOrganizerPage from "../modules/pages/event-organizer-page";
-import EventAdminSidePage from "../modules/pages/event-adminSide-page";
+import EventLandingPage from "../modules/pages/attendeeSidePages/event-landing-page";
+import EventOrganizerPage from "../modules/pages/organizerSidePages/event-organizer-page";
+import EventAdminSidePage from "../modules/pages/adminSidePages/event-adminSide-page";
 
 const AppRouter = () => {
   return (

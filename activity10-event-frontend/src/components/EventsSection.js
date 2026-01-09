@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { FaExternalLinkAlt, FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
+import { useNavigate } from "react-router-dom";
+
+
 
 const eventData = [
   {
@@ -55,6 +58,7 @@ const filters = [
 ];
 
 const EventsSection = () => {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("Public");
   const [activePage, setActivePage] = useState(0);
   const cardsPerPage = 3;
@@ -72,11 +76,10 @@ const EventsSection = () => {
           {filters.map((filter) => (
             <button
               key={filter.type}
-              className={`px-5 py-2 rounded-md font-semibold text-sm md:text-base transition-colors border border-[var(--accent-color)] focus:outline-none ${
-                activeFilter === filter.type
+              className={`px-5 py-2 rounded-md font-semibold text-sm md:text-base transition-colors border border-[var(--accent-color)] focus:outline-none ${activeFilter === filter.type
                   ? "bg-[var(--accent-color)] text-white shadow"
                   : "bg-white text-[var(--accent-color)] hover:bg-[var(--accent-color)]/10"
-              }`}
+                }`}
               onClick={() => {
                 setActiveFilter(filter.type);
                 setActivePage(0);
@@ -106,9 +109,17 @@ const EventsSection = () => {
                   <span className="text-xs md:text-sm text-gray-500 mb-2">{event.status}</span>
                 </div>
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
-                  <button className="px-5 py-2 rounded-md bg-[var(--accent-color)] text-white font-semibold shadow-lg hover:bg-[var(--accent-color)]/90 transition-colors flex items-center gap-2">
-                    Read more <FaExternalLinkAlt className="text-xs mb-[1px]" />
+                  <button
+                    onClick={() =>
+                      navigate(`/events`, {
+                        state: { event },
+                      })
+                    }
+                    className="px-5 py-2 rounded-md bg-[var(--accent-color)] text-white font-semibold shadow-lg hover:bg-[var(--accent-color)]/90 transition-colors flex items-center gap-2"
+                  >
+                    See Details <FaExternalLinkAlt className="text-xs mb-[1px]" />
                   </button>
+
                 </div>
               </div>
             ))
@@ -118,11 +129,10 @@ const EventsSection = () => {
           {Array.from({ length: pageCount }).map((_, idx) => (
             <button
               key={idx}
-              className={`mx-1 w-6 h-2 rounded-full transition-all duration-200 ${
-                idx === activePage
+              className={`mx-1 w-6 h-2 rounded-full transition-all duration-200 ${idx === activePage
                   ? "bg-[var(--accent-color)]"
                   : "bg-gray-300 hover:bg-[var(--accent-color)]/40"
-              }`}
+                }`}
               onClick={() => setActivePage(idx)}
               aria-label={`Go to page ${idx + 1}`}
             />
@@ -130,8 +140,7 @@ const EventsSection = () => {
         </div>
       </section>
       <footer className="w-full max-w-6xl mx-auto px-0 mt-16 relative overflow-visible">
-
-        <div className="w-full relative" style={{height: '140px'}}>
+        <div className="w-full relative" style={{ height: '140px' }}>
           <svg className="absolute left-0 top-0 w-full h-36" viewBox="0 0 1440 140" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
             <path d="M0,70 C480,210 960,0 1440,140 L1440,140 L0,140 Z" fill="#e5e7eb" />
           </svg>

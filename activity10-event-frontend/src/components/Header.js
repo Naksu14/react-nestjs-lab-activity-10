@@ -36,29 +36,29 @@ const navLinks = [
 
 const Header = ({ children }) => (
   <header
-    className="w-full flex items-center justify-between bg-[var(--bg-card)] border-b border-[var(--border-color)]"
+    className="w-full flex items-center justify-between bg-[var(--bg-card)] border-b border-[var(--border-color)] fixed top-0 left-0 z-[9999]"
     style={{ color: "var(--text-primary)", minHeight: '84px', padding: '0 10%' }}
   >
     <div className="flex items-center" style={{ marginLeft: '5%' }}>
       <img
         src={eventLogo}
         alt="Event Logo"
-        className="h-24 w-auto mr-1 select-none"
+        className="h-16 w-auto mr-1 select-none"
         style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.04))" }}
       />
-      <span className="text-3xl font-semibold tracking-wide select-none">
+      <span className="text-2xl font-semibold tracking-wide select-none">
         <span style={{ color: '#7c3aed' }}>Q</span>
         <span style={{ color: '#7c3aed' }}>R</span>
         <span style={{ color: '#1f2328' }}>serve</span>
       </span>
     </div>
-    <div className="flex flex-col items-end gap-4 pt-4">
-      <nav className="flex flex-row items-center gap-12 pt-2 px-2 pb-4 ml-10">
+    <div className="flex flex-col items-end gap-4 pt-2">
+      <nav className="flex flex-row items-center gap-3 pt-0 px-2 pb-2 ml-10">
         {navLinks.map(({ label, icon, href, right, placeholder }) => (
           <a
             key={label}
             href={href}
-            className="flex items-center group px-3 py-1 rounded text-lg text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-colors min-h-[40px]"
+            className="flex items-center group px-3 py-0 rounded text-lg text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-colors min-h-[40px]"
           >
             {icon}
             <span className={icon ? "mr-2" : ""}>{label}</span>

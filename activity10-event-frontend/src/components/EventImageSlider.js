@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const images = [
   require("../assets/images/sample-event-1.jpg"),
@@ -7,6 +8,7 @@ const images = [
 
 const EventImageSlider = () => {
   const [current, setCurrent] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -36,7 +38,9 @@ const EventImageSlider = () => {
         <p className="text-white text-base md:text-lg mb-6 max-w-xl text-left" style={{textShadow: '0 2px 8px rgba(0,0,0,0.1)'}}>Register and reserve tickets for your favorite events. Discover, join, and never miss out on the best happenings around you. Simple, fast, and free for everyone!</p>
         <div className="flex gap-4">
           <button className="px-6 py-2 rounded bg-[var(--accent-color)] text-white font-semibold text-lg shadow hover:bg-[var(--accent-color)]/90 transition-colors">Get started for free</button>
-          <button className="px-6 py-2 rounded bg-white text-[var(--accent-color)] font-semibold text-lg shadow hover:bg-gray-100 transition-colors">Sign in</button>
+          <button className="px-6 py-2 rounded bg-white text-[var(--accent-color)] font-semibold text-lg shadow hover:bg-gray-100 transition-colors"
+          onClick={() => navigate('/login')}
+          >Sign in</button>
         </div>
       </div>
       <svg

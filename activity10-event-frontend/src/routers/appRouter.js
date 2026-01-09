@@ -13,9 +13,11 @@ import Attendees from "../modules/pages/organizerSidePages/attendees-page";
 import QrScanner from "../modules/pages/organizerSidePages/qr-scanner-page";
 import Announcements from "../modules/pages/organizerSidePages/announcement-page";
 
-import EventAdminSidePage from "../modules/pages/adminSidePages/event-adminSide-page";
 import AboutEvent from "../modules/pages/attendeeSidePages/attendee-about-event";
+import OrganizerPage from "../modules/pages/adminSidePages/event-OrganizerPage";
 
+import EventAdminSidePage from "../modules/pages/adminSidePages/event-adminSide-page";
+import EventReportsPage from "../modules/pages/adminSidePages/event-reports-page";
 
 const AppRouter = () => {
   return (
@@ -39,6 +41,8 @@ const AppRouter = () => {
         <Route path="/announcements" element={<Announcements />} />
 
         <Route path="/admin" element={<EventAdminSidePage />} />
+        <Route path="/admin/user-management" element={<OrganizerPage />} />
+        <Route path="/admin/reports" element={<EventReportsPage />} />
       </Routes>
     </Router>
   );

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import eventLogo from "../assets/icons/event-logo.png";
 import { LuExternalLink } from "react-icons/lu";
 import { IoTicketOutline } from "react-icons/io5";
@@ -11,17 +12,15 @@ import LogoutModal from "./modal/logoutModal";
 const navLinks = [
   {
     label: "Home",
-    href: "#",
-    external: true,
+    to: "/",
   },
   {
     label: "Events",
-    href: "#",
-    external: true,
+    to: "/",
   },
   {
     label: "My Tickets",
-    href: "#",
+    to: "/tickets",
     icon: <IoTicketOutline className="text-xl text-[var(--accent-color)]" />,
     isProfile: true,
   },
@@ -29,6 +28,7 @@ const navLinks = [
 
 const Header = ({ children }) => {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => getCurrentUser(),
@@ -50,7 +50,11 @@ const Header = ({ children }) => {
       <div className="max-w-7xl mx-auto px-4 h-[84px] flex items-center justify-between">
 
         {/* LOGO */}
-        <div className="flex items-center gap-2 select-none">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 select-none"
+        >
           <img
             src={eventLogo}
             alt="QRserve Logo"
@@ -61,15 +65,16 @@ const Header = ({ children }) => {
             <span className="text-[var(--accent-color)]">QR</span>
             <span className="text-[var(--text-primary)]">serve</span>
           </span>
-        </div>
+        </button>
 
         {/* NAV */}
         <div className="flex items-center gap-6">
           <nav className="hidden md:flex items-center gap-2">
-            {navLinks.map(({ label, href, icon, external, isProfile }) => (
-              <a
+            {navLinks.map(({ label, to, icon, isProfile }) => (
+              <button
                 key={label}
-                href={href}
+                type="button"
+                onClick={() => navigate(to)}
                 className={`group flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition
                   ${
                     isProfile
@@ -82,11 +87,7 @@ const Header = ({ children }) => {
 
                 <span>{label}</span>
 
-                {external && (
-                  <LuExternalLink className="text-sm text-[var(--text-muted)] group-hover:text-[var(--accent-color)] transition" />
-                )}
-
-              </a>
+              </button>
             ))}
           </nav>
 

@@ -34,7 +34,7 @@ export class EventTicket {
   event: Event;
 
   @Column()
-  registration_id: string;
+  registration_id: number;
 
   @ManyToOne(() => EventRegistration)
   @JoinColumn({ name: 'registration_id' })

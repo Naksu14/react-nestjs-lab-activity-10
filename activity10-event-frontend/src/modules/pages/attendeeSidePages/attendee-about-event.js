@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "../../../components/Header";
 import { useLocation, useNavigate } from "react-router-dom";
 import fallbackImage from "../../../assets/images/sample-event-1.jpg";
+import { getCurrentUser } from "../../../services/authService";
+import { registerForEvent, getRegistrationCount, getUserRegistrationForEvent } from "../../../services/attendeesService";
 
 const formatDateRange = (startDate, endDate) => {
     if (!startDate && !endDate) return "Date to be announced";
@@ -18,39 +21,71 @@ const getImage = (event) => event?.imageUrl || fallbackImage;
 
 const AboutEvent = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { state } = useLocation();
     const event = state?.event;
 
     const normalized = useMemo(() => {
         if (!event) return null;
+        const startRaw = event.startDate || event.start_datetime || event.startDateTime;
+        const endRaw = event.endDate || event.end_datetime || event.endDateTime || startRaw;
+        const startDate = startRaw ? new Date(startRaw) : null;
+        const endDate = endRaw ? new Date(endRaw) : null;
+        const startTimeMs = startDate ? startDate.getTime() : null;
+
         return {
+            id: event.id ?? event.event_id,
             title: event.title,
             description: event.description || "No description provided.",
             location: event.location || "Location to be announced",
             capacity: event.capacity,
             status: event.status || "",
             statusLabel: event.statusLabel || event.status || "Status",
-            dateRange: formatDateRange(event.startDate, event.endDate || event.startDate),
+            dateRange: formatDateRange(startDate, endDate),
             host: event.organizer?.full_name || event.organizer?.name || "Organizer",
             imageUrl: getImage(event),
-            startDate: event.startDate ? new Date(event.startDate) : null,
+            startDate,
+            startTimeMs,
         };
     }, [event]);
 
     const [timeLeft, setTimeLeft] = useState(null);
+    const [registering, setRegistering] = useState(false);
+    const [registerError, setRegisterError] = useState(null);
+    const [registerSuccess, setRegisterSuccess] = useState(null);
+
+    const { data: currentUser } = useQuery({
+        queryKey: ["currentUser"],
+        queryFn: () => getCurrentUser(),
+    });
+
+    const { data: registrationCount } = useQuery({
+        queryKey: ["registration-count", normalized?.id],
+        queryFn: () => getRegistrationCount(normalized.id),
+        enabled: Boolean(normalized?.id),
+    });
+
+    const { data: userRegistration } = useQuery({
+        queryKey: ["user-registration", normalized?.id, currentUser?.id],
+        queryFn: () => getUserRegistrationForEvent(normalized.id, currentUser.id),
+        enabled: Boolean(normalized?.id && currentUser?.id),
+    });
 
     useEffect(() => {
-        if (!normalized?.startDate) {
+        if (!normalized?.startTimeMs) {
             setTimeLeft(null);
             return;
         }
 
         const compute = () => {
             const now = new Date();
-            const diff = normalized.startDate.getTime() - now.getTime();
+            const diff = normalized.startTimeMs - now.getTime();
+            const isSameDay = normalized.startDate && now.toDateString() === normalized.startDate.toDateString();
+
             if (diff <= 0) {
-                return null;
+                return isSameDay ? { ongoing: true } : null;
             }
+
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / (1000 * 60)) % 60);
@@ -64,9 +99,34 @@ const AboutEvent = () => {
         }, 1000);
 
         return () => clearInterval(id);
-    }, [normalized?.startDate]);
+    }, [normalized?.startTimeMs]);
 
     const isRegisterEnabled = normalized?.status === "published";
+
+    const alreadyRegistered = Boolean(userRegistration);
+
+    const handleRegister = async () => {
+        if (!isRegisterEnabled || registering || alreadyRegistered) return;
+
+        if (!currentUser) {
+            navigate("/login");
+            return;
+        }
+
+        try {
+            setRegisterError(null);
+            setRegisterSuccess(null);
+            setRegistering(true);
+            await registerForEvent({ eventId: normalized.id, userId: currentUser.id });
+            setRegisterSuccess("You're registered! Check your email for the ticket.");
+            queryClient.invalidateQueries({ queryKey: ["registration-count", normalized.id] });
+            queryClient.invalidateQueries({ queryKey: ["user-registration", normalized.id, currentUser.id] });
+        } catch (err) {
+            setRegisterError(err.message || "Registration failed. Please try again.");
+        } finally {
+            setRegistering(false);
+        }
+    };
 
     if (!normalized) {
         return (
@@ -106,9 +166,13 @@ const AboutEvent = () => {
                             <p className="text-sm font-semibold text-white flex flex-col gap-1">
                                 <span>Event Countdown</span>
                                 {timeLeft ? (
-                                    <span className="text-xs text-white/90">
-                                        {timeLeft.days}d · {timeLeft.hours}h · {timeLeft.minutes}m · {timeLeft.seconds}s remaining
-                                    </span>
+                                    timeLeft.ongoing ? (
+                                        <span className="text-xs text-white/90">Ongoing</span>
+                                    ) : (
+                                        <span className="text-xs text-white/90">
+                                            {timeLeft.days}d · {timeLeft.hours}h · {timeLeft.minutes}m · {timeLeft.seconds}s remaining
+                                        </span>
+                                    )
                                 ) : (
                                     <span className="text-xs text-white/80">Countdown unavailable</span>
                                 )}
@@ -122,9 +186,10 @@ const AboutEvent = () => {
                                 {normalized.title}
                             </h1>
                             <div className="flex items-center gap-2 flex-wrap">
-                                {normalized.capacity ? (
-                                    <span className="text-xs bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-1 rounded font-semibold">
-                                        Capacity: {normalized.capacity}
+                                {registrationCount !== undefined ? (
+                                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
+                                        Registered: {registrationCount}
+                                        {normalized.capacity ? ` / ${normalized.capacity}` : ""}
                                     </span>
                                 ) : null}
                                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
@@ -139,15 +204,30 @@ const AboutEvent = () => {
                             </p>
                             <button
                                 className={`mt-3 w-full py-3 rounded-lg font-semibold text-base transition shadow ${
-                                    isRegisterEnabled
-                                        ? "bg-[var(--accent-color)] hover:bg-[var(--accent-color)]/90 text-white"
-                                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                    alreadyRegistered
+                                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                        : isRegisterEnabled
+                                            ? "bg-[var(--accent-color)] hover:bg-[var(--accent-color)]/90 text-white"
+                                            : "bg-gray-200 text-gray-500 cursor-not-allowed"
                                 }`}
-                                disabled={!isRegisterEnabled}
-                                aria-disabled={!isRegisterEnabled}
+                                disabled={!isRegisterEnabled || registering || alreadyRegistered}
+                                aria-disabled={!isRegisterEnabled || registering || alreadyRegistered}
+                                onClick={handleRegister}
                             >
-                                {isRegisterEnabled ? "Register Now" : "Registration unavailable"}
+                                {alreadyRegistered
+                                    ? "Already registered"
+                                    : registering
+                                        ? "Registering..."
+                                        : isRegisterEnabled
+                                            ? "Register Now"
+                                            : "Registration unavailable"}
                             </button>
+                            {registerSuccess ? (
+                                <p className="text-sm text-green-600 mt-2">{registerSuccess}</p>
+                            ) : null}
+                            {registerError ? (
+                                <p className="text-sm text-red-600 mt-2">{registerError}</p>
+                            ) : null}
                             <button
                                 className="mt-6 px-6 py-2 rounded bg-gray-200 text-[var(--accent-color)] font-semibold text-base shadow hover:bg-gray-300 transition"
                                 onClick={() => navigate(-1)}

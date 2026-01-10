@@ -1,8 +1,10 @@
 ﻿import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FaExternalLinkAlt, FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
 import useLandingEvents from "../hooks/landingHooks/event-landinghook";
+import { getAllRegistrations } from "../services/attendeesService";
 import fallbackImage from "../assets/images/sample-event-1.jpg";
 
 const filters = [
@@ -16,6 +18,25 @@ const EventsSection = () => {
   const [activeFilter, setActiveFilter] = useState(filters[0].type);
   const [activePage, setActivePage] = useState(0);
   const cardsPerPage = 3;
+
+  const { data: registrations } = useQuery({
+    queryKey: ["registrations-all"],
+    queryFn: () => getAllRegistrations(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  const registrationCounts = useMemo(() => {
+    const counts = {};
+    (registrations || []).forEach((reg) => {
+      const id = Number(reg.event_id);
+      if (!Number.isNaN(id)) {
+        counts[id] = (counts[id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [registrations]);
 
   const filteredEvents = useMemo(
     () => events.filter((event) => event.status === activeFilter),
@@ -94,9 +115,14 @@ const EventsSection = () => {
                   <span className="text-xs md:text-sm text-gray-500">
                     {formatDateTime(event.startDate)}
                   </span>
-                  {event.capacity ? (
-                    <span className="text-[11px] md:text-xs text-gray-500">Capacity: {event.capacity}</span>
-                  ) : null}
+                  <div className="flex items-center gap-2 flex-wrap mt-1">
+                    {registrationCounts[event.id] !== undefined ? (
+                      <span className="text-[11px] md:text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
+                        Registered: {registrationCounts[event.id]}
+                        {event.capacity ? ` / ${event.capacity}` : ""}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
                   <button

@@ -22,8 +22,8 @@ export class CreateEventTicketDto {
   event_id: number;
 
   @ApiProperty({ example: 1 })
-  @IsUUID()
-  registration_id: string;
+  @IsNumber()
+  registration_id: number;
 
   @ApiPropertyOptional({ enum: TicketStatus, default: TicketStatus.VALID })
   @IsEnum(TicketStatus)

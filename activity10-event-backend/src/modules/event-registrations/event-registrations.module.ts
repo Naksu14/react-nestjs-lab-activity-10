@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventRegistration } from './entities/event-registration.entity';
 import { Event } from '../events/entities/event.entity';
 import { EventUser } from '../event-users/entities/event-user.entity';
+import { EventTicketsModule } from '../event-tickets/event-tickets.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([EventRegistration, Event, EventUser]),
+    EventTicketsModule,
   ],
   controllers: [EventRegistrationsController],
   providers: [EventRegistrationsService],

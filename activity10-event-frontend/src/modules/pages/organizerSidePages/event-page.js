@@ -5,7 +5,16 @@ import CreateEventModal from "../../../components/modal/createEventModal";
 import DeleteEventModal from "../../../components/modal/deleteEventModal";
 import UpdateEventModal from "../../../components/modal/updateEventModal";
 import ViewEvent from "../../../components/organizer/viewEvent";
-import { Calendar, MapPin, Users, Plus, Trash2, Search, Edit3 } from "lucide-react";
+import Pagination from "../../../components/organizer/pagination";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Plus,
+  Trash2,
+  Search,
+  Edit3,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllEventsByOrganizer,
@@ -24,6 +33,8 @@ const MyEvent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const eventsPerPage = 6;
 
   const { data: organizerEvents } = useQuery({
     queryKey: ["organizerEvents"],
@@ -42,6 +53,24 @@ const MyEvent = () => {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * eventsPerPage,
+    currentPage * eventsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
 
   const handleDeleteEvent = async (eventId) => {
     try {
@@ -65,7 +94,7 @@ const MyEvent = () => {
       <div className="ml-[17rem] flex-1 flex flex-col">
         <NavBar />
 
-        <main className="p-8 max-w-7xl mx-auto w-full">
+        <main className="p-4 max-w-7xl mx-auto w-full">
           {selectedEvent ? (
             <ViewEvent
               event={selectedEvent}
@@ -74,7 +103,7 @@ const MyEvent = () => {
           ) : (
             <>
               {/* Header & Main Actions */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-4">
                 <div>
                   <h1 className="text-4xl text-left font-black tracking-tight">
                     My Events
@@ -102,7 +131,7 @@ const MyEvent = () => {
               </div>
 
               {/* Search & Filter Bar */}
-              <div className="mb-8 flex flex-wrap gap-4 items-center">
+              <div className="mb-4 flex flex-wrap gap-4 items-center">
                 <div className="relative flex-1 min-w-[300px]">
                   <Search
                     className="absolute left-4 top-1/2 -translate-y-1/2"
@@ -114,7 +143,7 @@ const MyEvent = () => {
                     placeholder="Search by event name or location..."
                     className="w-full rounded-2xl py-3 pl-12 pr-4 outline-none transition-all"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                     style={{
                       backgroundColor: "var(--bg-card)",
                       border: "1px solid var(--border-color)",
@@ -125,7 +154,7 @@ const MyEvent = () => {
                 <div className="flex items-center gap-2">
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={handleStatusChange}
                     className="rounded-2xl py-3 px-3 text-md outline-none"
                     style={{
                       backgroundColor: "var(--bg-card)",
@@ -143,8 +172,8 @@ const MyEvent = () => {
               </div>
 
               {/* Events Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredEvents.map((ev) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {paginatedEvents.map((ev) => (
                   <div
                     key={ev.id}
                     className="event-card group relative rounded-lg p-6 transition-all duration-300"
@@ -278,6 +307,15 @@ const MyEvent = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
             </>
           )}
         </main>

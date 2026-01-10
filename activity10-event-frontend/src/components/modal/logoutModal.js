@@ -27,14 +27,6 @@ const LogoutModal = ({ isOpen, onClose }) => {
           border: "1px solid var(--border-color)",
         }}
       >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-lg hover:opacity-70"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <X size={18} />
-        </button>
 
         {/* Icon */}
         <div

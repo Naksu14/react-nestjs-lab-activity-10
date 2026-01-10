@@ -35,6 +35,14 @@ export class EventAnnouncementsService {
     return this.eventAnnouncementsRepository.find();
   }
 
+  async findAllAnnouncementsBySender(senderId: number) {
+    return this.eventAnnouncementsRepository.find({
+      where: { sent_by: senderId },
+      order: { sent_at: 'DESC' },
+      relations: ['sender', 'event'],
+    });
+  }
+
   // Get all announcements for a specific event
   async findByEvent(eventId: number) {
     return this.eventAnnouncementsRepository.find({

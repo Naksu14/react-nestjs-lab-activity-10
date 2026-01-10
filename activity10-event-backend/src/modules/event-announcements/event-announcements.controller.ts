@@ -6,7 +6,10 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { EventAnnouncementsService } from './event-announcements.service';
 import { CreateEventAnnouncementDto } from './dto/create-event-announcement.dto';
 import { UpdateEventAnnouncementDto } from './dto/update-event-announcement.dto';
@@ -41,6 +44,21 @@ export class EventAnnouncementsController {
   })
   findAll() {
     return this.eventAnnouncementsService.findAll();
+  }
+
+  @Get('organizer')
+  @ApiOperation({ summary: 'Get all announcements by a specific sender' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of event announcements by the sender',
+    type: [CreateEventAnnouncementDto],
+  })
+  @UseGuards(AuthGuard('jwt'))
+  getAnnouncementsBySender(@Request() req) {
+      const organizerId = req.user.id;
+    return this.eventAnnouncementsService.findAllAnnouncementsBySender(
+      organizerId
+    );
   }
 
   // Get all announcements for a specific event

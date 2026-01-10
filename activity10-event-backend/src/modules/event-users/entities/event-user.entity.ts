@@ -31,6 +31,9 @@ export class EventUser {
   @Column({ default: false })
   isActive: boolean;
 
+  @Column({ default: false })
+  isArchived: boolean;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

@@ -14,8 +14,15 @@ import { getAnnouncementsByEvent } from "../../services/organizerService";
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const ViewEvent = ({ event, onBack }) => {
-  if (!event) return null;
   const navigate = useNavigate();
+
+  const { data: announcements, isLoading: isAnnouncementsLoading } = useQuery({
+    queryKey: ["eventAnnouncements", event?.id],
+    queryFn: () => getAnnouncementsByEvent(event.id),
+    enabled: !!event?.id,
+  });
+
+  if (!event) return null;
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -31,11 +38,6 @@ const ViewEvent = ({ event, onBack }) => {
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean);
-
-  const { data: announcements, isLoading: isAnnouncementsLoading } = useQuery({
-    queryKey: ["eventAnnouncements", event.id],
-    queryFn: () => getAnnouncementsByEvent(event.id),
-  });
 
   return (
     <div className=" space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">

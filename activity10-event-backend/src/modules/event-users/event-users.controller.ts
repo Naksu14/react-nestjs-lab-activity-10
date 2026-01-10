@@ -23,11 +23,19 @@ export class EventUsersController {
   constructor(private readonly eventUsersService: EventUsersService) {}
 
   // Get all users
-  @Get()
+  @Get('all')
   @ApiOperation({ summary: 'Get all event users' })
   @ApiResponse({ status: 200, description: 'List of event users', type: [CreateEventUserDto] })
   async getAllUsers() {
     return this.eventUsersService.getAllUsers();
+  }
+
+  // get all archived users
+  @Get('archived')
+  @ApiOperation({ summary: 'Get all archived event users' })
+  @ApiResponse({ status: 200, description: 'List of archived event users', type: [CreateEventUserDto] })
+  async getArchivedUsers() {
+    return this.eventUsersService.getArchivedUsers();
   }
 
   // Get current authenticated user
@@ -55,23 +63,45 @@ export class EventUsersController {
   }
 
   // Create a new user
-  @Post()
+  @Post('create')
   @ApiOperation({ summary: 'Create a new event user' })
   @ApiResponse({ status: 201, description: 'The created event user', type: CreateEventUserDto })
   async createUser(@Body() createUserDto: CreateEventUserDto): Promise<EventUser> {
     return this.eventUsersService.create(createUserDto);
   }
 
+  // Archive user
+  @Patch('archive/:id')
+  @ApiOperation({ summary: 'Archive event user by ID' })
+  @ApiResponse({ status: 200, description: 'The archived event user', type: CreateEventUserDto })
+  async archiveUser(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<EventUser | null> {
+    const archived = await this.eventUsersService.archiveUser(id);
+    return archived ?? null;
+  }
+
+  // Restore user
+  @Patch('restore/:id')
+  @ApiOperation({ summary: 'Restore archived event user by ID' })
+  @ApiResponse({ status: 200, description: 'The restored event user', type: CreateEventUserDto })
+  async restoreUser(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<EventUser | null> {
+    const restored = await this.eventUsersService.restoreUser(id);
+    return restored ?? null;
+  }
+
   // Update current authenticated user
-  @Patch('me')
+  @Patch('update/:id')
   @ApiOperation({ summary: 'Update current authenticated user' })
   @ApiResponse({ status: 200, description: 'The updated event user', type: UpdateEventUserDto })
   @UseGuards(AuthGuard('jwt'))
   async updateUser(
-    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateEventUserDto: Partial<EventUser>,
   ): Promise<EventUser | null> {
-    return this.eventUsersService.updateUser(req.user.id, updateEventUserDto);
+    return this.eventUsersService.updateUser(id, updateEventUserDto);
   }
 
   // Delete user by ID

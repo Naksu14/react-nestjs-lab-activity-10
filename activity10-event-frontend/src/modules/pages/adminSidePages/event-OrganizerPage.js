@@ -39,7 +39,7 @@ function OrganizerPage() {
           <OrganizerFilters onSearch={handleSearch} onStatusChange={handleStatusChange} />
           
           {/* Table Section */}
-          <OrganizerTable />
+          <OrganizerTable status={status} />
           
           {/* Pagination */}
           <Pagination currentPage={currentPage} totalPages={5} onPageChange={setCurrentPage} />

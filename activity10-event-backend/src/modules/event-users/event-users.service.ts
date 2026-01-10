@@ -16,7 +16,7 @@ export class EventUsersService {
   // Get all users
   async getAllUsers(): Promise<EventUser[]> {
     return this.usersRepository.find({
-      select: ['id', 'email', 'firstname', 'lastname', 'isActive'],
+      select: ['id', 'email', 'firstname', 'lastname', 'isActive', 'isArchived'],
     });
   }
 
@@ -24,7 +24,7 @@ export class EventUsersService {
   async getUserById(id: number): Promise<EventUser | null> {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'firstname', 'lastname', 'isActive'],
+      select: ['id', 'email', 'firstname', 'lastname', 'isActive', 'isArchived'],
     });
   }
 
@@ -52,6 +52,33 @@ export class EventUsersService {
     }
   }
 
+  // Archive user
+  async archiveUser(id: number){
+    const userId = await this.usersRepository.findOneBy({id});
+    if (!userId) {
+      return null;
+    }
+    await this.usersRepository.update(id, { isArchived: true });
+  }
+
+  // Restore user
+  async restoreUser(id: number){
+    const userId = await this.usersRepository.findOneBy({id});
+    if (!userId) {
+      return null;
+    }
+    await this.usersRepository.update(id, { isArchived: false });
+    return this.usersRepository.findOneBy({ id });
+  }
+
+  // get all archived users
+  async getArchivedUsers(): Promise<EventUser[]> {
+    return this.usersRepository.find({
+      where: { isArchived: true },
+      select: ['id', 'email', 'firstname', 'lastname', 'isActive', 'isArchived'],
+    });
+  }
+  
   // Update current authenticated user
   async updateUser(
     id: number,

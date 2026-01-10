@@ -15,4 +15,6 @@ export class UpdateEventUserDto extends PartialType(CreateEventUserDto) {
     role?: string;
     @ApiPropertyOptional({ example: true })
     isActive?: boolean;
+    @ApiPropertyOptional({ example: true })
+    isArchived?: boolean;
 }

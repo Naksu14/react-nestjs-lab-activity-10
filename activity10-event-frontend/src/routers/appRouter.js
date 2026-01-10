@@ -35,10 +35,10 @@ const AppRouter = () => {
 
         {/* Protected Routes (Only accessible if logged in) */}
         <Route path="/organizer" element={<EventOrganizerPage />} />
-        <Route path="/myevents" element={<MyEvent />} />
-        <Route path="/attendees" element={<Attendees />} />
-        <Route path="/scanner" element={<QrScanner />} />
-        <Route path="/announcements" element={<Announcements />} />
+        <Route path="/organizer/myevents" element={<MyEvent />} />
+        <Route path="/organizer/attendees" element={<Attendees />} />
+        <Route path="/organizer/scanner" element={<QrScanner />} />
+        <Route path="/organizer/announcements" element={<Announcements />} />
 
         <Route path="/admin" element={<EventAdminSidePage />} />
         <Route path="/admin/user-management" element={<OrganizerPage />} />

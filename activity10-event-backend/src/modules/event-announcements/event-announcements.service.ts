@@ -35,6 +35,15 @@ export class EventAnnouncementsService {
     return this.eventAnnouncementsRepository.find();
   }
 
+  // Get all announcements for a specific event
+  async findByEvent(eventId: number) {
+    return this.eventAnnouncementsRepository.find({
+      where: { event_id: eventId },
+      order: { sent_at: 'DESC' },
+      relations: ['sender'],
+    });
+  }
+
   // Get a single event announcement by ID
   async findOne(id: number): Promise<EventAnnouncement> {
     const announcement = await this.eventAnnouncementsRepository.findOneBy({

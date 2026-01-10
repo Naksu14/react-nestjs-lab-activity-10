@@ -55,10 +55,13 @@ export class EventUsersService {
   // Update current authenticated user
   async updateUser(
     id: number,
-    updateEventUserDto: Partial<EventUser>,
+    updateEventUserDto: UpdateEventUserDto,
   ): Promise<EventUser | null> {
     if (updateEventUserDto.password) {
-      updateEventUserDto.password = await bcrypt.hash(updateEventUserDto.password, 10);
+      updateEventUserDto.password = await bcrypt.hash(
+        updateEventUserDto.password,
+        10,
+      );
     }
     await this.usersRepository.update(id, updateEventUserDto);
     return this.usersRepository.findOneBy({ id });

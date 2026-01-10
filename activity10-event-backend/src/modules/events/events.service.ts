@@ -44,6 +44,13 @@ export class EventsService {
     });
   }
 
+  async getAllEventsByOrganizer(organizerId: number): Promise<Event[]> {
+    return this.eventsRepository.find({
+      where: { organizer: { id: organizerId } },
+      relations: ['organizer'],
+    });
+  }
+
   // Get a single event by ID
   async findOne(id: number): Promise<Event> {
     const event = await this.eventsRepository.findOne({

@@ -92,7 +92,7 @@ const QrScanner = () => {
     >
       <Sidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className=" ml-[17rem] flex-1 flex flex-col">
         <NavBar />
 
         <main className="p-8 max-w-7xl mx-auto w-full">

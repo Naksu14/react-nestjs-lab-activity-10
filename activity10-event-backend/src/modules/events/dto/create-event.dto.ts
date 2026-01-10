@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsDateString,
   Min,
+  IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { EventStatus } from '../entities/event.entity';
@@ -37,6 +38,11 @@ export class CreateEventDto {
   @IsNumber()
   @Min(1)
   capacity: number;
+
+  @ApiProperty({ example: 'event-image.jpg', required: false, nullable: true })
+  @IsString()
+  @IsOptional()
+  eventImage?: string;
 
   @ApiProperty({ enum: EventStatus })
   @IsEnum(EventStatus)

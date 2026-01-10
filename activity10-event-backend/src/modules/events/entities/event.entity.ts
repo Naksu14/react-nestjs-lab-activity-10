@@ -39,6 +39,9 @@ export class Event {
   @Column()
   capacity: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  eventImage?: string;
+
   @Column({
     type: 'enum',
     enum: EventStatus,

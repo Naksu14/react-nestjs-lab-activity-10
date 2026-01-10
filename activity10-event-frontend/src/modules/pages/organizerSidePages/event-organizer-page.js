@@ -2,8 +2,17 @@ import React from "react";
 import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
 import { Calendar } from "lucide-react";
+import { getAllEventsByOrganizer } from "../../../services/organizerService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const EventOrganizerPage = () => {
+  const queryClient = useQueryClient();
+  const {
+    data: organizerEvents,
+  } = useQuery({
+    queryKey: ["organizerEvents"],
+    queryFn: () => getAllEventsByOrganizer(),
+  });
   return (
     <div
       className="min-h-screen flex transition-colors duration-300"
@@ -14,7 +23,7 @@ const EventOrganizerPage = () => {
     >
       <Sidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="ml-[17rem] flex-1 flex flex-col">
         <NavBar />
 
         <main className="p-8 max-w-7xl mx-auto w-full">
@@ -47,7 +56,7 @@ const EventOrganizerPage = () => {
                     {label}
                   </p>
                   <p className="text-3xl font-bold mt-2">
-                    {[12, "1,240", 850][i]}
+                    {[organizerEvents?.length || 0, 0, 0][i]}
                   </p>
                 </div>
               )

@@ -13,13 +13,15 @@ const Login = () => {
     setErrorMessage("");
     login({ email, password })
       .then(({ accessToken, role }) => {
-        // Token is already saved in authService; just route by role here
+        if (accessToken) {
+          localStorage.setItem("authToken", accessToken);
+        }
+        localStorage.setItem("userRole", role);
         if (role === "admin") {
           navigate("/admin");
         } else if (role === "organizer") {
           navigate("/organizer");
         } else {
-          // attendee or no role -> landing page
           navigate("/");
         }
       })
@@ -92,10 +94,7 @@ const Login = () => {
             </div>
           ) : null}
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <input type="checkbox" id="remember" className="mr-2" />
-              <label className="text-sm">Remember me</label>
-            </div>
+
             <a href="#" className="text-sm text-blue-500 hover:underline">
               Forgot password?
             </a>

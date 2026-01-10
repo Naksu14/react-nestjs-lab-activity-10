@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import LogoutModal from "../modal/logoutModal";
 import {
   LayoutDashboard,
   Calendar,
   Users,
   QrCode,
-  FileDown,
   Megaphone,
   LogOut,
 } from "lucide-react";
@@ -13,6 +13,7 @@ import eventLogo from "../../assets/icons/event-logo.png";
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
   const menuItems = [
     {
       group: "General",
@@ -22,14 +23,26 @@ const Sidebar = () => {
           icon: <LayoutDashboard size={20} />,
           path: "/organizer",
         },
-        { name: "My Events", icon: <Calendar size={20} />, path: "/myevents" },
+        {
+          name: "My Events",
+          icon: <Calendar size={20} />,
+          path: "/organizer/myevents",
+        },
       ],
     },
     {
       group: "Management",
       items: [
-        { name: "Attendees", icon: <Users size={20} />, path: "/attendees" },
-        { name: "QR Scanner", icon: <QrCode size={20} />, path: "/scanner" },
+        {
+          name: "Attendees",
+          icon: <Users size={20} />,
+          path: "/organizer/attendees",
+        },
+        {
+          name: "QR Scanner",
+          icon: <QrCode size={20} />,
+          path: "/organizer/scanner",
+        },
       ],
     },
     {
@@ -38,7 +51,7 @@ const Sidebar = () => {
         {
           name: "Announcements",
           icon: <Megaphone size={20} />,
-          path: "/announcements",
+          path: "/organizer/announcements",
         },
       ],
     },
@@ -46,9 +59,18 @@ const Sidebar = () => {
 
   const location = useLocation();
 
+  // Pick the most-specific matching path so only one menu item is active.
+  const allPaths = menuItems.flatMap((section) =>
+    section.items.map((i) => i.path)
+  );
+  const bestMatch = allPaths
+    .filter(
+      (p) => location.pathname === p || location.pathname.startsWith(p + "/")
+    )
+    .sort((a, b) => b.length - a.length)[0];
   return (
     <aside
-      className="sidebar w-64 h-[calc(100vh-0.5rem)] flex flex-col text-left border m-1 rounded-lg transition-colors duration-300"
+      className="sidebar w-64 h-[calc(100vh-0.5rem)] fixed flex flex-col text-left border m-1 rounded-lg transition-colors duration-300"
       style={{
         backgroundColor: "var(--bg-sidebar)",
         color: "var(--text-primary)",
@@ -77,9 +99,7 @@ const Sidebar = () => {
             </p>
             <ul className="space-y-1">
               {section.items.map((item) => {
-                const isActive =
-                  location.pathname === item.path ||
-                  location.pathname.startsWith(item.path + "/");
+                const isActive = item.path === bestMatch;
                 return (
                   <li key={item.name}>
                     <a
@@ -109,11 +129,18 @@ const Sidebar = () => {
         className="p-4 border-t border-gray-100 dark:border-gray-800"
         style={{ borderColor: "var(--border-color)" }}
       >
-        <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-500 rounded-xl hover:bg-red-50 transition-colors">
+        <button
+          className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-500 rounded-xl hover:bg-red-50 transition-colors"
+          onClick={() => setIsLogoutModalOpen(true)}
+        >
           <LogOut size={20} />
           <span className="ml-3">Logout</span>
         </button>
       </div>
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
     </aside>
   );
 };

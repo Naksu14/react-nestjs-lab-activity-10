@@ -16,13 +16,14 @@ const navLinks = [
   },
   {
     label: "Events",
-    to: "/",
+    to: "/#events",
   },
   {
     label: "My Tickets",
     to: "/tickets",
     icon: <IoTicketOutline className="text-xl text-[var(--accent-color)]" />,
     isProfile: true,
+    requiresAuth: true,
   },
 ];
 
@@ -44,6 +45,14 @@ const Header = ({ children }) => {
     const name = `${first} ${last}`.trim() || "Guest";
     return { name, initials: initials.toUpperCase(), hasUser: true };
   }, [currentUser]);
+
+  const handleNav = (to, requiresAuth) => {
+    if (requiresAuth && !profile.hasUser) {
+      navigate("/login");
+      return;
+    }
+    navigate(to);
+  };
 
   return (
     <header className="fixed top-0 left-0 w-full z-[9999] bg-[var(--bg-card)] border-b border-[var(--border-color)]">
@@ -70,11 +79,11 @@ const Header = ({ children }) => {
         {/* NAV */}
         <div className="flex items-center gap-6">
           <nav className="hidden md:flex items-center gap-2">
-            {navLinks.map(({ label, to, icon, isProfile }) => (
+            {navLinks.map(({ label, to, icon, isProfile, requiresAuth }) => (
               <button
                 key={label}
                 type="button"
-                onClick={() => navigate(to)}
+                onClick={() => handleNav(to, requiresAuth)}
                 className={`group flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition
                   ${
                     isProfile

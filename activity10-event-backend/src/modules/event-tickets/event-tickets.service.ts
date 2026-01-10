@@ -47,7 +47,7 @@ export class EventTicketsService {
   // Get all event tickets
   async findAll() {
     return this.eventTicketsRepository.find({
-      relations: ['event', 'registration'],
+      relations: ['event', 'registration', 'registration.user'],
     });
   }
 
@@ -55,8 +55,24 @@ export class EventTicketsService {
   async findOne(id: number) {
     return this.eventTicketsRepository.findOne({
       where: { id },
-      relations: ['event', 'registration'],
+      relations: ['event', 'registration', 'registration.user'],
     });
+  }
+
+  async cancelByRegistrationId(registrationId: number) {
+    if (!registrationId) return;
+
+    const tickets = await this.eventTicketsRepository.find({
+      where: { registration_id: registrationId },
+    });
+
+    if (!tickets.length) return;
+
+    for (const ticket of tickets) {
+      ticket.status = TicketStatus.CANCELLED;
+    }
+
+    await this.eventTicketsRepository.save(tickets);
   }
 
   // Update an existing event ticket

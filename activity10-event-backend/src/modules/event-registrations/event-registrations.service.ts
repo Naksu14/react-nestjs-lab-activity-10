@@ -112,7 +112,17 @@ export class EventRegistrationsService {
     updateEventRegistrationDto: UpdateEventRegistrationDto,
   ): Promise<EventRegistration> {
     const registration = await this.findOne(id);
-    Object.assign(registration, updateEventRegistrationDto);
+
+    if (updateEventRegistrationDto.registration_status === RegistrationStatus.CANCELLED) {
+      registration.registration_status = RegistrationStatus.CANCELLED;
+      registration.cancelled_at = new Date();
+      registration.updated_at = new Date();
+      await this.eventTicketsService.cancelByRegistrationId(registration.id);
+    } else {
+      Object.assign(registration, updateEventRegistrationDto);
+      registration.updated_at = new Date();
+    }
+
     return this.eventRegistrationsRepository.save(registration);
   }
 

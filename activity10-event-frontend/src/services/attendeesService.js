@@ -42,7 +42,11 @@ export const getRegistrationCount = async (eventId) => {
 		return 0;
 	}
 
-	return data.filter((reg) => Number(reg.event_id) === Number(eventId)).length;
+	return data.filter((reg) => {
+		const matchesEvent = Number(reg.event_id) === Number(eventId);
+		const isRegistered = (reg.registration_status || "").toLowerCase() === "registered";
+		return matchesEvent && isRegistered;
+	}).length;
 };
 
 export const getAllRegistrations = async () => {
@@ -70,7 +74,40 @@ export const getUserRegistrationForEvent = async (eventId, userId) => {
 		return null;
 	}
 
-	return data.find(
+	const regs = data.filter(
 		(reg) => Number(reg.event_id) === Number(eventId) && Number(reg.user_id) === Number(userId),
-	) || null;
+	);
+
+	return regs.find((reg) => (reg.registration_status || "").toLowerCase() === "registered") || null;
+};
+
+export const getTicketsForUser = async (userId) => {
+	if (!userId) {
+		throw new Error("Missing user id");
+	}
+
+	const { data } = await api.get("/event-tickets", {
+		headers: getAuthHeader(),
+	});
+
+	if (!Array.isArray(data)) {
+		return [];
+	}
+
+	return data.filter((ticket) => {
+		const regUserId = ticket.registration?.user_id ?? ticket.registration?.user?.id;
+		return Number(regUserId) === Number(userId);
+	});
+};
+
+export const cancelRegistration = async (registrationId) => {
+	if (!registrationId) {
+		throw new Error("Missing registration id");
+	}
+
+	await api.patch(
+		`/event-registrations/${registrationId}`,
+		{ registration_status: "cancelled" },
+		{ headers: getAuthHeader() },
+	);
 };

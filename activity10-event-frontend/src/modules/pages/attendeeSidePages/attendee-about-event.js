@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "../../../components/Header";
 import { useLocation, useNavigate } from "react-router-dom";
 import fallbackImage from "../../../assets/images/sample-event-1.jpg";
 import { getCurrentUser } from "../../../services/authService";
-import { registerForEvent, getRegistrationCount, getUserRegistrationForEvent } from "../../../services/attendeesService";
+import { registerForEvent, getRegistrationCount, getUserRegistrationForEvent, cancelRegistration } from "../../../services/attendeesService";
+import { MapPin, Clock, Users } from "lucide-react";
 
 const formatDateRange = (startDate, endDate) => {
     if (!startDate && !endDate) return "Date to be announced";
@@ -28,10 +29,16 @@ const AboutEvent = () => {
     const normalized = useMemo(() => {
         if (!event) return null;
         const startRaw = event.startDate || event.start_datetime || event.startDateTime;
-        const endRaw = event.endDate || event.end_datetime || event.endDateTime || startRaw;
+        const endRaw = event.endDate || event.end_datetime || event.endDateTime;
         const startDate = startRaw ? new Date(startRaw) : null;
         const endDate = endRaw ? new Date(endRaw) : null;
         const startTimeMs = startDate ? startDate.getTime() : null;
+        const fallbackDurationMs = 24 * 60 * 60 * 1000; // default to one day if no explicit end
+        const endTimeMs = endDate
+            ? endDate.getTime()
+            : startDate
+                ? startTimeMs + fallbackDurationMs
+                : null;
 
         return {
             id: event.id ?? event.event_id,
@@ -46,11 +53,13 @@ const AboutEvent = () => {
             imageUrl: getImage(event),
             startDate,
             startTimeMs,
+            endDate,
+            endTimeMs,
         };
     }, [event]);
 
-    const [timeLeft, setTimeLeft] = useState(null);
-    const [registering, setRegistering] = useState(false);
+    const [timeLeft, setTimeLeft] = useState({ kind: "unknown" });
+    const [cancelling, setCancelling] = useState(false);
     const [registerError, setRegisterError] = useState(null);
     const [registerSuccess, setRegisterSuccess] = useState(null);
 
@@ -71,26 +80,38 @@ const AboutEvent = () => {
         enabled: Boolean(normalized?.id && currentUser?.id),
     });
 
+    const isCompletedStatus = (normalized?.status || normalized?.statusLabel || "").toLowerCase().includes("completed");
+
     useEffect(() => {
+        if (isCompletedStatus) {
+            setTimeLeft({ kind: "completed" });
+            return;
+        }
+
         if (!normalized?.startTimeMs) {
-            setTimeLeft(null);
+            setTimeLeft({ kind: "unknown" });
             return;
         }
 
         const compute = () => {
-            const now = new Date();
-            const diff = normalized.startTimeMs - now.getTime();
-            const isSameDay = normalized.startDate && now.toDateString() === normalized.startDate.toDateString();
+            const now = Date.now();
+            const startMs = normalized.startTimeMs;
+            const endMs = normalized.endTimeMs ?? startMs;
 
-            if (diff <= 0) {
-                return isSameDay ? { ongoing: true } : null;
+            if (now >= endMs) {
+                return { kind: "completed" };
             }
 
+            if (now >= startMs) {
+                return { kind: "ongoing" };
+            }
+
+            const diff = startMs - now;
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / (1000 * 60)) % 60);
             const seconds = Math.floor((diff / 1000) % 60);
-            return { days, hours, minutes, seconds };
+            return { kind: "upcoming", days, hours, minutes, seconds };
         };
 
         setTimeLeft(compute());
@@ -99,14 +120,29 @@ const AboutEvent = () => {
         }, 1000);
 
         return () => clearInterval(id);
-    }, [normalized?.startTimeMs]);
+    }, [normalized?.startTimeMs, normalized?.endTimeMs, isCompletedStatus]);
 
-    const isRegisterEnabled = normalized?.status === "published";
+    const isRegisterEnabled = normalized?.status === "published" && !isCompletedStatus;
 
-    const alreadyRegistered = Boolean(userRegistration);
+    const alreadyRegistered = (userRegistration?.registration_status || "").toLowerCase() === "registered";
+    const showCancel = alreadyRegistered;
+
+    const registerMutation = useMutation({
+        mutationFn: ({ eventId, userId }) => registerForEvent({ eventId, userId }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["registration-count", normalized?.id] });
+            queryClient.invalidateQueries({ queryKey: ["user-registration", normalized?.id, currentUser?.id] });
+            queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+            queryClient.invalidateQueries({ queryKey: ["registrations-all"] });
+            setRegisterSuccess("You're registered! Check your email for the ticket.");
+        },
+        onError: (err) => {
+            setRegisterError(err?.message || "Registration failed. Please try again.");
+        },
+    });
 
     const handleRegister = async () => {
-        if (!isRegisterEnabled || registering || alreadyRegistered) return;
+        if (!isRegisterEnabled || registerMutation.isPending || alreadyRegistered) return;
 
         if (!currentUser) {
             navigate("/login");
@@ -116,21 +152,34 @@ const AboutEvent = () => {
         try {
             setRegisterError(null);
             setRegisterSuccess(null);
-            setRegistering(true);
-            await registerForEvent({ eventId: normalized.id, userId: currentUser.id });
-            setRegisterSuccess("You're registered! Check your email for the ticket.");
-            queryClient.invalidateQueries({ queryKey: ["registration-count", normalized.id] });
-            queryClient.invalidateQueries({ queryKey: ["user-registration", normalized.id, currentUser.id] });
+            await registerMutation.mutateAsync({ eventId: normalized.id, userId: currentUser.id });
         } catch (err) {
-            setRegisterError(err.message || "Registration failed. Please try again.");
+            setRegisterError(err?.message || "Registration failed. Please try again.");
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!userRegistration?.id || cancelling) return;
+        try {
+            setRegisterError(null);
+            setRegisterSuccess(null);
+            setCancelling(true);
+            await cancelRegistration(userRegistration.id);
+            setRegisterSuccess("Registration cancelled.");
+            queryClient.invalidateQueries({ queryKey: ["registration-count", normalized.id] });
+            queryClient.invalidateQueries({ queryKey: ["user-registration", normalized.id, currentUser?.id] });
+            queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+            queryClient.invalidateQueries({ queryKey: ["registrations-all"] });
+        } catch (err) {
+            setRegisterError(err.message || "Unable to cancel registration.");
         } finally {
-            setRegistering(false);
+            setCancelling(false);
         }
     };
 
     if (!normalized) {
         return (
-            <div className="min-h-screen bg-white text-left">
+            <div className="min-h-screen bg-[var(--bg-main)] text-left">
                 <Header />
                 <section className="pt-[96px] max-w-5xl mx-auto px-4 flex flex-col items-start gap-4">
                     <h1 className="text-2xl font-bold text-[var(--accent-color)]">No event selected</h1>
@@ -147,46 +196,124 @@ const AboutEvent = () => {
     }
 
     return (
-        <div className="min-h-screen bg-white text-left">
+        <div className="min-h-screen bg-[var(--bg-main)] text-left">
             <Header />
 
             <section className="pt-[96px] max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 rounded-2xl overflow-hidden bg-gray-100 h-[420px]">
-                    <img
-                        src={normalized.imageUrl}
-                        alt={normalized.title}
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                    />
+                <div className="lg:col-span-2 space-y-2">
+                    <div
+                        className="relative overflow-hidden rounded-lg border shadow-xl shadow-black/5"
+                        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)" }}
+                    >
+                        <div className="relative h-80 w-full">
+                            <img
+                                src={normalized.imageUrl}
+                                alt={normalized.title}
+                                className="w-full h-full object-cover"
+                                draggable={false}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                            <div className="absolute bottom-6 left-6 space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-white text-black">
+                                        {normalized.statusLabel}
+                                    </span>
+                                    {registrationCount !== undefined && !isCompletedStatus ? (
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-[var(--accent-color)] text-white">
+                                            Registered: {registrationCount}
+                                            {normalized.capacity ? ` / ${normalized.capacity}` : ""}
+                                        </span>
+                                    ) : null}
+                                </div>
+                                <h1 className="text-3xl font-bold text-white leading-tight drop-shadow">
+                                    {normalized.title}
+                                </h1>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-6">
+                            <div
+                                className="flex items-center gap-3 border-b pb-4"
+                                style={{ borderColor: "var(--border-color)" }}
+                            >
+                                <div className="h-8 w-1.5 rounded-full bg-[var(--accent-color)]" />
+                                <h2
+                                    className="text-xl font-bold tracking-tight"
+                                    style={{ color: "var(--text-primary)" }}
+                                >
+                                    About this event
+                                </h2>
+                            </div>
+
+                            <div className="prose prose-sm max-w-none">
+                                {(normalized.description || "No description provided.")
+                                    .split(/\n{2,}/)
+                                    .map((p) => p.trim())
+                                    .filter(Boolean)
+                                    .map((para, idx) => (
+                                        <p
+                                            key={idx}
+                                            className="text-[15px] leading-relaxed mb-4 last:mb-0 text-justify sm:text-left"
+                                            style={{ color: "var(--text-muted)", fontWeight: 400 }}
+                                        >
+                                            {para}
+                                        </p>
+                                    ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex flex-col items-center self-start">
-                    <div className="bg-white rounded-2xl shadow-lg border overflow-hidden w-full">
-                        <div className="bg-[var(--accent-color)] px-5 py-3">
-                            <p className="text-sm font-semibold text-white flex flex-col gap-1">
-                                <span>Event Countdown</span>
-                                {timeLeft ? (
-                                    timeLeft.ongoing ? (
-                                        <span className="text-xs text-white/90">Ongoing</span>
-                                    ) : (
-                                        <span className="text-xs text-white/90">
-                                            {timeLeft.days}d · {timeLeft.hours}h · {timeLeft.minutes}m · {timeLeft.seconds}s remaining
+                    <div
+                        className="rounded-2xl shadow-lg border overflow-hidden w-full"
+                        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)" }}
+                    >
+                        {!isCompletedStatus ? (
+                            <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border-color)", backgroundColor: "var(--bg-secondary)" }}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                                            Event Status
                                         </span>
-                                    )
-                                ) : (
-                                    <span className="text-xs text-white/80">Countdown unavailable</span>
-                                )}
-                            </p>
-                        </div>
+                                        {timeLeft.kind === "completed" ? (
+                                            <span className="text-base font-semibold text-emerald-600">Completed</span>
+                                        ) : timeLeft.kind === "ongoing" ? (
+                                            <span className="text-base font-semibold text-blue-600">Ongoing</span>
+                                        ) : timeLeft.kind === "upcoming" ? (
+                                            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                                                Starts in {timeLeft.days}d · {timeLeft.hours}h · {timeLeft.minutes}m · {timeLeft.seconds}s
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                                                Countdown unavailable
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                                            timeLeft.kind === "completed"
+                                                ? "bg-emerald-100 text-emerald-700"
+                                                : timeLeft.kind === "ongoing"
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : "bg-[var(--accent-color)]/10 text-[var(--accent-color)]"
+                                        }`}
+                                    >
+                                        {timeLeft.kind === "completed"
+                                            ? "Completed"
+                                            : timeLeft.kind === "ongoing"
+                                                ? "Ongoing"
+                                                : timeLeft.kind === "upcoming"
+                                                    ? "Upcoming"
+                                                    : "Unknown"}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : null}
+
                         <div className="p-6 flex flex-col space-y-5 text-left">
-                            <span className="text-sm font-semibold uppercase text-[var(--accent-color)]">
-                                Event Title
-                            </span>
-                            <h1 className="text-2xl font-bold leading-snug">
-                                {normalized.title}
-                            </h1>
                             <div className="flex items-center gap-2 flex-wrap">
-                                {registrationCount !== undefined ? (
+                                {registrationCount !== undefined && !isCompletedStatus ? (
                                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
                                         Registered: {registrationCount}
                                         {normalized.capacity ? ` / ${normalized.capacity}` : ""}
@@ -196,27 +323,82 @@ const AboutEvent = () => {
                                     {normalized.statusLabel}
                                 </span>
                             </div>
-                            <p className="text-base text-gray-500">
-                                {normalized.dateRange}
-                            </p>
-                            <p className="text-base font-medium">
-                                {normalized.location}
-                            </p>
+
+                            <div className="space-y-4 text-left">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-[var(--accent-color)] text-white flex items-center justify-center font-bold">
+                                        {normalized.title?.[0] ?? "E"}
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold" style={{ color: "var(--text-muted)" }}>
+                                            Event
+                                        </p>
+                                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                                            {normalized.title}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <hr style={{ borderColor: "var(--border-color)" }} />
+
+                                <div className="flex gap-4">
+                                    <div className="mt-1 p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                                        <MapPin size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                            Location
+                                        </p>
+                                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                            {normalized.location}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="mt-1 p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                                        <Clock size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                            Date & Time
+                                        </p>
+                                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                            {normalized.dateRange}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="mt-1 p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+                                        <Users size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                                            Capacity
+                                        </p>
+                                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                            {normalized.capacity ? `${normalized.capacity} Spots` : "TBA"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button
-                                className={`mt-3 w-full py-3 rounded-lg font-semibold text-base transition shadow ${
+                                className={`mt-1 w-full py-3 rounded-lg font-semibold text-base transition shadow ${
                                     alreadyRegistered
                                         ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                                         : isRegisterEnabled
                                             ? "bg-[var(--accent-color)] hover:bg-[var(--accent-color)]/90 text-white"
                                             : "bg-gray-200 text-gray-500 cursor-not-allowed"
                                 }`}
-                                disabled={!isRegisterEnabled || registering || alreadyRegistered}
-                                aria-disabled={!isRegisterEnabled || registering || alreadyRegistered}
+                                disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
+                                aria-disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
                                 onClick={handleRegister}
                             >
                                 {alreadyRegistered
                                     ? "Already registered"
-                                    : registering
+                                    : registerMutation.isPending
                                         ? "Registering..."
                                         : isRegisterEnabled
                                             ? "Register Now"
@@ -228,26 +410,29 @@ const AboutEvent = () => {
                             {registerError ? (
                                 <p className="text-sm text-red-600 mt-2">{registerError}</p>
                             ) : null}
-                            <button
-                                className="mt-6 px-6 py-2 rounded bg-gray-200 text-[var(--accent-color)] font-semibold text-base shadow hover:bg-gray-300 transition"
-                                onClick={() => navigate(-1)}
-                            >
-                                Return to Events
-                            </button>
+                            <div className="mt-4 flex flex-wrap gap-3 justify-start">
+                                <button
+                                    className={`${showCancel ? "" : "w-full"} px-6 py-2 rounded bg-gray-200 text-[var(--accent-color)] font-semibold text-base shadow hover:bg-gray-300 transition`}
+                                    onClick={() => navigate(-1)}
+                                >
+                                    Return to Events
+                                </button>
+                                {showCancel ? (
+                                    <button
+                                        className="px-6 py-2 rounded bg-red-100 text-red-700 font-semibold text-base shadow hover:bg-red-200 transition disabled:opacity-60"
+                                        onClick={handleCancel}
+                                        disabled={cancelling}
+                                    >
+                                        {cancelling ? "Cancelling..." : "Cancel"}
+                                    </button>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
                     <p className="text-sm text-gray-400 mt-4 text-center">
                         Hosted by <span className="font-semibold text-[var(--accent-color)]">{normalized.host}</span>
                     </p>
                 </div>
-            </section>
-
-            <section className="max-w-7xl mx-auto px-4 mt-2">
-                <h2 className="text-xl font-bold mb-4">About event</h2>
-
-                <p className="text-base text-gray-600 leading-relaxed max-w-4xl">
-                    {normalized.description}
-                </p>
             </section>
         </div>
     );

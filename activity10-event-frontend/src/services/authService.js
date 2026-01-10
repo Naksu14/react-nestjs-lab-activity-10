@@ -54,7 +54,7 @@ export const getCurrentUser = async () => {
 
 // REGISTER NEW USER
 export const createNewUser = async (userInfo) => {
-  const { data } = await api.post("/event-users", userInfo);
+  const { data } = await api.post("/event-users/signup", userInfo);
   return data;
 };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Calendar,
   MapPin,
@@ -6,19 +6,34 @@ import {
   ArrowLeft,
   Clock,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAnnouncementsByEvent } from "../../services/organizerService";
+import {
+  getAnnouncementsByEvent,
+  getRegistrationsByEventId,
+} from "../../services/organizerService";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const ViewEvent = ({ event, onBack }) => {
   const navigate = useNavigate();
+  const [attendeeSearch, setAttendeeSearch] = useState("");
 
   const { data: announcements, isLoading: isAnnouncementsLoading } = useQuery({
     queryKey: ["eventAnnouncements", event?.id],
     queryFn: () => getAnnouncementsByEvent(event.id),
+    enabled: !!event?.id,
+  });
+
+  const {
+    data: registrations,
+    isLoading: isRegistrationsLoading,
+    isError: isRegistrationsError,
+  } = useQuery({
+    queryKey: ["eventRegistrations", event?.id],
+    queryFn: () => getRegistrationsByEventId(event.id),
     enabled: !!event?.id,
   });
 
@@ -38,6 +53,28 @@ const ViewEvent = ({ event, onBack }) => {
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean);
+
+  const filteredAttendees = (registrations || []).filter((registration) => {
+    if (!attendeeSearch.trim()) return true;
+    const target = `${registration?.user?.firstname || ""} ${
+      registration?.user?.lastname || ""
+    } ${registration?.user?.email || ""}`
+      .toLowerCase()
+      .trim();
+    return target.includes(attendeeSearch.toLowerCase().trim());
+  });
+
+  const registeredCount = (registrations || []).filter(
+    (r) => r.registration_status === "registered"
+  ).length;
+  const cancelledCount = (registrations || []).filter(
+    (r) => r.registration_status === "cancelled"
+  ).length;
+  const capacityLeft = Math.max((event.capacity || 0) - registeredCount, 0);
+  const capacityPercent = Math.min(
+    100,
+    event.capacity ? Math.round((registeredCount / event.capacity) * 100) : 0
+  );
 
   return (
     <div className=" space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -131,7 +168,7 @@ const ViewEvent = ({ event, onBack }) => {
               </div>
             </div>
           </div>
-            {/* Announcements Section */}
+          {/* Event Updates Section */}
           <div className="lg:col-span-3">
             <div
               className="rounded-lg border p-6 shadow-sm"
@@ -196,6 +233,136 @@ const ViewEvent = ({ event, onBack }) => {
                       </p>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Registered Attendees Section */}
+          <div className="lg:col-span-3">
+            <div
+              className="rounded-lg border p-5 shadow-sm"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                borderColor: "var(--border-color)",
+              }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start gap-2">
+                  <div className="h-6 w-6 rounded-full bg-[#7c3aed] flex items-center justify-center text-white mt-0.5">
+                    <Users size={14} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+                      Registered Attendees
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {registeredCount} of {event.capacity || 0} spots filled
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 min-w-[120px]">
+                  <div className="h-1.5 w-24 rounded-full overflow-hidden" style={{ backgroundColor: "var(--bg-secondary)" }}>
+                    <div
+                      className="h-full rounded-full bg-[#7c3aed]"
+                      style={{ width: `${capacityPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-semibold" style={{ color: "var(--text-muted)" }}>
+                    {capacityPercent}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Registered</p>
+                  <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{registeredCount}</p>
+                </div>
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Cancelled</p>
+                  <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{cancelledCount}</p>
+                </div>
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Spots Left</p>
+                  <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{capacityLeft}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span>
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>Registered</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>Cancelled</span>
+                </div>
+              </div>
+
+              <div className="relative w-full mb-4">
+                <Search
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)" }}
+                />
+                <input
+                  type="text"
+                  value={attendeeSearch}
+                  onChange={(e) => setAttendeeSearch(e.target.value)}
+                  placeholder="Search attendees by name, email, or ticket code..."
+                  className="pl-8 pr-3 py-2 text-sm rounded-md border bg-[var(--bg-main)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] w-full"
+                  style={{ borderColor: "var(--border-color)", color: "var(--text-primary)" }}
+                />
+              </div>
+
+              {isRegistrationsLoading ? (
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  Loading attendees...
+                </p>
+              ) : isRegistrationsError ? (
+                <p className="text-sm text-red-500">Failed to load attendees.</p>
+              ) : filteredAttendees.length === 0 ? (
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No attendees found.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredAttendees.map((registration) => {
+                    const initials = `${registration.user?.firstname?.[0] || ''}${registration.user?.lastname?.[0] || ''}`.toUpperCase();
+                    const isCancelled = registration.registration_status === 'cancelled';
+                    return (
+                      <div
+                        key={registration.id}
+                        className="flex items-center justify-between rounded-lg border px-4 py-3"
+                        style={{ borderColor: "var(--border-color)", backgroundColor: "var(--bg-card)" }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-lg bg-[#f0ebff] border flex items-center justify-center text-xs font-semibold" style={{ borderColor: "#e0d9ff", color: "#7c3aed" }}>
+                            {initials || '??'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {registration.user?.firstname} {registration.user?.lastname}
+                            </p>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              {registration.user?.email}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1 ${
+                            isCancelled
+                              ? 'bg-red-50 text-red-700 border-red-100'
+                              : 'bg-[#f5f0ff] text-[#7c3aed] border-[#e3d9ff]'
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                          {registration.registration_status}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

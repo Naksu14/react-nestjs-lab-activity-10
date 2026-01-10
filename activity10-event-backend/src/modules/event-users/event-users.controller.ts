@@ -30,6 +30,22 @@ export class EventUsersController {
     return this.eventUsersService.getAllUsers();
   }
 
+  // Get all organizers
+  @Get('role/organizers')
+  @ApiOperation({ summary: 'Get all organizers' })
+  @ApiResponse({ status: 200, description: 'List of organizers', type: [CreateEventUserDto] })
+  async getOrganizers() {
+    return this.eventUsersService.getAllOrganizers();
+  }
+
+  // Get all attendees
+  @Get('role/attendees')
+  @ApiOperation({ summary: 'Get all attendees' })
+  @ApiResponse({ status: 200, description: 'List of attendees', type: [CreateEventUserDto] })
+  async getAttendees() {
+    return this.eventUsersService.getAllAttendees();
+  }
+
   // get all archived users
   @Get('archived')
   @ApiOperation({ summary: 'Get all archived event users' })
@@ -68,6 +84,14 @@ export class EventUsersController {
   @ApiResponse({ status: 201, description: 'The created event user', type: CreateEventUserDto })
   async createUser(@Body() createUserDto: CreateEventUserDto): Promise<EventUser> {
     return this.eventUsersService.create(createUserDto);
+  }
+
+  // attendees signup
+  @Post('signup')
+  @ApiOperation({ summary: 'Event user signup' })
+  @ApiResponse({ status: 201, description: 'The signed up event user', type: CreateEventUserDto })
+  async signupUser(@Body() createUserDto: CreateEventUserDto): Promise<EventUser> {
+    return this.eventUsersService.registerAttendee(createUserDto);
   }
 
   // Archive user

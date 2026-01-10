@@ -21,6 +21,7 @@ const Signup = () => {
       lastname: lastName,
       email,
       password,
+      role: "attendee",
       isActive: true,
     })
       .then(() => {

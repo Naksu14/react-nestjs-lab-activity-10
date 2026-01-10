@@ -9,6 +9,7 @@ function OrganizerPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('active');
+  const [role, setRole] = useState('all');
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -17,6 +18,11 @@ function OrganizerPage() {
 
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus);
+    setCurrentPage(1);
+  };
+
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
     setCurrentPage(1);
   };
 
@@ -36,10 +42,10 @@ function OrganizerPage() {
             <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-1">Manage Organizers</h1>
           
           {/* Filters Section */}
-          <OrganizerFilters onSearch={handleSearch} onStatusChange={handleStatusChange} />
+          <OrganizerFilters onSearch={handleSearch} onStatusChange={handleStatusChange} onRoleChange={handleRoleChange} />
           
           {/* Table Section */}
-          <OrganizerTable status={status} />
+          <OrganizerTable status={status} role={role} searchTerm={searchTerm} />
           
           {/* Pagination */}
           <Pagination currentPage={currentPage} totalPages={5} onPageChange={setCurrentPage} />

@@ -51,6 +51,29 @@ export const getAnnouncementsByEvent = async (eventId) => {
   return data;
 };
 
+export const getRegistrationsByEventId = async (eventId) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(`/event-registrations/event/${eventId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
+export const getRegistrationsByOrganizerId = async (organizerId) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(
+    `/event-registrations/organizer/${organizerId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return data;
+};
+
 export const getAllAnnouncementsBySender = async () => {
   const token = localStorage.getItem("authToken");
   const { data } = await api.get(`/event-announcements/organizer`, {

@@ -1,37 +1,39 @@
-import React, { useState } from 'react';
-import { useAllOrganizers, useUpdateOrganizer, useArchiveOrganizer, useRestoreOrganizer } from '../../hooks/adminSideHooks/event-useOrganizerTable';
+import React, { useMemo, useState } from 'react';
+import { useAllUsers, useUpdateOrganizer, useArchiveOrganizer, useRestoreOrganizer } from '../../hooks/adminSideHooks/event-useOrganizerTable';
 import CreateOrganizerModal from '../modal/createUserModal';
 import ConfirmModal from '../modal/ConfirmModal';
 import Toast from './Toast';
 
-function OrganizerTable({ organizers = [], status = 'active' }) {
+function OrganizerTable({ status = 'active', role = 'all', searchTerm = '' }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedOrganizer, setSelectedOrganizer] = useState(null);
   const [organizerToArchive, setOrganizerToArchive] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  // Mock data if no organizers provided
-  const mockOrganizers = Array.from({ length: 6 }, (_, i) => ({
-    id: i + 1,
-    fullname: `John Doe ${i + 1}`,
-    email: `organizer${i + 1}@example.com`,
-    status: i % 2 === 0 ? 'Active' : 'Inactive',
-  }));
 
-  const data = organizers.length > 0 ? organizers : mockOrganizers;
-  const { data: allOrganizers, isLoading, isError } = useAllOrganizers();
+  const { data: allUsers, isLoading, isError } = useAllUsers();
   const { mutateAsync: updateOrganizer } = useUpdateOrganizer();
   const { mutateAsync: archiveOrganizer } = useArchiveOrganizer();
   const { mutateAsync: restoreOrganizer } = useRestoreOrganizer();
 
-  // Filter organizers based on status
-  const filteredOrganizers = allOrganizers?.filter((organizer) => {
-    if (status === 'all') return !organizer.isArchived; // All = non-archived only
-    if (status === 'active') return organizer.isActive && !organizer.isArchived;
-    if (status === 'inactive') return !organizer.isActive && !organizer.isArchived;
-    if (status === 'archived') return organizer.isArchived; // Archived = separate section
-    return true;
-  }) || [];
+  const filteredOrganizers = useMemo(() => {
+    return (allUsers || []).filter((organizer) => {
+      if (role !== 'all' && organizer.role !== role) return false;
+      if (status === 'all' && organizer.isArchived) return false;
+      if (status === 'active' && (!organizer.isActive || organizer.isArchived)) return false;
+      if (status === 'inactive' && (organizer.isActive || organizer.isArchived)) return false;
+      if (status === 'archived' && !organizer.isArchived) return false;
+
+      if (searchTerm) {
+        const target = `${organizer.firstname || ''} ${organizer.lastname || ''} ${organizer.email || ''}`
+          .toLowerCase()
+          .trim();
+        if (!target.includes(searchTerm.toLowerCase().trim())) return false;
+      }
+
+      return true;
+    });
+  }, [allUsers, role, searchTerm, status]);
 
   const handleEdit = (organizer) => {
     setSelectedOrganizer(organizer);
@@ -92,9 +94,10 @@ function OrganizerTable({ organizers = [], status = 'active' }) {
       <div className="overflow-x-auto">
         <table className="w-full">
           <colgroup>
-            <col className="w-[25%]" />
-            <col className="w-[35%]" />
-            <col className="w-[20%]" />
+            <col className="w-[22%]" />
+            <col className="w-[30%]" />
+            <col className="w-[14%]" />
+            <col className="w-[14%]" />
             <col className="w-[20%]" />
           </colgroup>
           <thead>
@@ -104,6 +107,9 @@ function OrganizerTable({ organizers = [], status = 'active' }) {
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                Role
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                 Status
@@ -128,14 +134,25 @@ function OrganizerTable({ organizers = [], status = 'active' }) {
                   <p className="text-sm text-[var(--text-primary)]">{organizer.email}</p>
                 </td>
                 <td className="px-6 py-4 text-left">
+                  <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)]">
+                    {organizer.role || 'organizer'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-left">
                   <span
                     className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                      organizer.status === 'Active'
+                      organizer.isArchived
+                        ? 'bg-gray-200 text-gray-700'
+                        : organizer.isActive
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        : 'bg-red-100 text-red-700'
                     }`}
                   >
-                    {organizer.isActive ? 'Active' : 'Inactive'}
+                    {organizer.isArchived
+                      ? 'Archived'
+                      : organizer.isActive
+                      ? 'Active'
+                      : 'Inactive'}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-center">

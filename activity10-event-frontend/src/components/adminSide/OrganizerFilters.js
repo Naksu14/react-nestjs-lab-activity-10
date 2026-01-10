@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useCreateOrganizer } from '../../hooks/adminSideHooks/event-useOrganizerTable';
 import CreateOrganizerModal from '../modal/createUserModal';
 
-function OrganizerFilters({ onSearch, onStatusChange }) {
+function OrganizerFilters({ onSearch, onStatusChange, onRoleChange }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [status, setStatus] = useState('active');
+  const [role, setRole] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -18,6 +19,11 @@ function OrganizerFilters({ onSearch, onStatusChange }) {
     onStatusChange(newStatus);
   };
 
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
+    onRoleChange(newRole);
+  };
+
   const { mutateAsync: createOrganizer } = useCreateOrganizer();
 
   const handleCreate = async (formData) => {
@@ -29,6 +35,27 @@ function OrganizerFilters({ onSearch, onStatusChange }) {
       {/* Tabs and Search Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
+          {/* Role Tabs */}
+          <div className="flex items-center gap-2">
+            {[
+              { value: 'all', label: 'All' },
+              { value: 'organizer', label: 'Organizers' },
+              { value: 'attendee', label: 'Attendees' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => handleRoleChange(item.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  role === item.value
+                    ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
+                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
           {/* Status Tabs */}
           <div className="flex items-center gap-2">
             <button

@@ -106,6 +106,23 @@ export class EventRegistrationsService {
     return registration;
   }
 
+    // get event registration by user and event
+  async findByEventId(eventId: number): Promise<EventRegistration[]> {
+    return this.eventRegistrationsRepository.find({
+      where: { event_id: eventId },
+      relations: ['event', 'user'],
+    });
+  }
+
+  // Get registrations for all events owned by an organizer
+  async findByOrganizerId(organizerId: number): Promise<EventRegistration[]> {
+    return this.eventRegistrationsRepository.find({
+      where: { event: { organizer: { id: organizerId } } },
+      relations: ['event', 'event.organizer', 'user'],
+    });
+  }
+
+
   // Update an event registration
   async update(
     id: number,

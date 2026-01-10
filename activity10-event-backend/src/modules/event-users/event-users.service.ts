@@ -16,7 +16,23 @@ export class EventUsersService {
   // Get all users
   async getAllUsers(): Promise<EventUser[]> {
     return this.usersRepository.find({
-      select: ['id', 'email', 'firstname', 'lastname', 'isActive', 'isArchived'],
+      select: ['id', 'email', 'firstname', 'lastname', 'role', 'isActive', 'isArchived'],
+    });
+  }
+
+  // Get all organizers
+  async getAllOrganizers(): Promise<EventUser[]> {
+    return this.usersRepository.find({
+      where: { role: 'organizer' },
+      select: ['id', 'email', 'firstname', 'lastname', 'role', 'isActive', 'isArchived'],
+    });
+  }
+
+  // Get all attendees
+  async getAllAttendees(): Promise<EventUser[]> {
+    return this.usersRepository.find({
+      where: { role: 'attendee' },
+      select: ['id', 'email', 'firstname', 'lastname', 'role', 'isActive', 'isArchived'],
     });
   }
 
@@ -77,6 +93,20 @@ export class EventUsersService {
       where: { isArchived: true },
       select: ['id', 'email', 'firstname', 'lastname', 'isActive', 'isArchived'],
     });
+  }
+
+  // attendees signup
+  async registerAttendee(
+    createUserDto: CreateEventUserDto,
+  ): Promise<EventUser> {
+    const { password, ...userData } = createUserDto;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = this.usersRepository.create({
+      ...userData,
+      password: hashedPassword,
+      isActive: true,
+    });
+    return this.usersRepository.save(newUser);
   }
   
   // Update current authenticated user

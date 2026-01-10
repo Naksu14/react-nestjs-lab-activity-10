@@ -35,7 +35,6 @@ const ViewEvent = ({ event, onBack }) => {
   const { data: announcements, isLoading: isAnnouncementsLoading } = useQuery({
     queryKey: ["eventAnnouncements", event.id],
     queryFn: () => getAnnouncementsByEvent(event.id),
-    enabled: !!event?.id,
   });
 
   return (

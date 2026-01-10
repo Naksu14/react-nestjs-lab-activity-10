@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import { LogOut, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,9 +15,9 @@ const LogoutModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-[9999]"
       style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
     >
       <div
@@ -79,7 +80,8 @@ const LogoutModal = ({ isOpen, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,21 +1,11 @@
 import React, { useState } from "react";
 import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
-import { Send, Plus, X, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
+import CreateAnnouncementModal from "../../../components/modal/createAnnouncementModal";
 
 const Announcements = () => {
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    event_id: "",
-    title: "",
-    message: "",
-  });
-
-  // Mock data
-  const events = [
-    { id: 1, name: "Tech Conference 2026" },
-    { id: 2, name: "Music Festival" },
-  ];
 
   const announcements = [
     {
@@ -35,13 +25,6 @@ const Announcements = () => {
       recipients: 1200,
     },
   ];
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Sending:", formData);
-    setShowModal(false);
-    setFormData({ event_id: "", title: "", message: "" });
-  };
 
   return (
     <div
@@ -111,106 +94,16 @@ const Announcements = () => {
         </main>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <div
-            className="w-full max-w-md mx-4 rounded-xl p-5"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              border: "1px solid var(--border-color)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">New Announcement</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ color: "var(--text-muted)" }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <select
-                value={formData.event_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, event_id: e.target.value })
-                }
-                required
-                className="w-full px-3 py-2 rounded-lg"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid var(--border-color)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                <option value="">Select event...</option>
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Title"
-                required
-                className="w-full px-3 py-2 rounded-lg"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid var(--border-color)",
-                  color: "var(--text-primary)",
-                }}
-              />
-              <textarea
-                value={formData.message}
-                onChange={(e) =>
-                  setFormData({ ...formData, message: e.target.value })
-                }
-                placeholder="Message..."
-                rows={4}
-                required
-                className="w-full px-3 py-2 rounded-lg resize-none"
-                style={{
-                  backgroundColor: "var(--bg-secondary)",
-                  border: "1px solid var(--border-color)",
-                  color: "var(--text-primary)",
-                }}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-2 rounded-lg"
-                  style={{
-                    border: "1px solid var(--border-color)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2"
-                  style={{
-                    backgroundColor: "var(--accent-color)",
-                    color: "#fff",
-                  }}
-                >
-                  <Send size={16} /> Send
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CreateAnnouncementModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmit={(payload) => {
+          // Here you can call your API using payload:
+          // { event_id: number, title: string, message: string }
+          console.log("Sending announcement:", payload);
+          setShowModal(false);
+        }}
+      />
     </div>
   );
 };

@@ -51,6 +51,16 @@ export const getAnnouncementsByEvent = async (eventId) => {
   return data;
 };
 
+export const createAnnouncement = async (announcementData) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.post("/event-announcements", announcementData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
 
 export const updateEvent = async (eventId, eventData) => {
   const token = localStorage.getItem("authToken");

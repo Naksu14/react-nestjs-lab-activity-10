@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { LogOut, X } from "lucide-react";
+import { LogOut} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LogoutModal = ({ isOpen, onClose }) => {

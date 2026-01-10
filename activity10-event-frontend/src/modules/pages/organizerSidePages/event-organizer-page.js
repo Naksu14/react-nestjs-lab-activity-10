@@ -3,10 +3,9 @@ import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
 import { Calendar } from "lucide-react";
 import { getAllEventsByOrganizer } from "../../../services/organizerService";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 const EventOrganizerPage = () => {
-  const queryClient = useQueryClient();
   const {
     data: organizerEvents,
   } = useQuery({
@@ -23,7 +22,7 @@ const EventOrganizerPage = () => {
     >
       <Sidebar />
 
-      <div className="ml-[17rem] flex-1 flex flex-col">
+      <div className="ml-[16.5rem] flex-1 flex flex-col">
         <NavBar />
 
         <main className="p-8 max-w-7xl mx-auto w-full">

@@ -91,7 +91,7 @@ const MyEvent = () => {
     >
       <Sidebar />
 
-      <div className="ml-[17rem] flex-1 flex flex-col">
+      <div className="ml-[16.5rem] flex-1 flex flex-col">
         <NavBar />
 
         <main className="p-4 max-w-7xl mx-auto w-full">
@@ -141,7 +141,7 @@ const MyEvent = () => {
                   <input
                     type="text"
                     placeholder="Search by event name or location..."
-                    className="w-full rounded-2xl py-3 pl-12 pr-4 outline-none transition-all"
+                    className="w-full rounded-2xl py-3 pl-12 pr-4 outline-none transition-all text-sm"
                     value={searchTerm}
                     onChange={handleSearchChange}
                     style={{
@@ -155,7 +155,7 @@ const MyEvent = () => {
                   <select
                     value={statusFilter}
                     onChange={handleStatusChange}
-                    className="rounded-2xl py-3 px-3 text-md outline-none"
+                    className="rounded-2xl py-3 px-3 text-sm outline-none"
                     style={{
                       backgroundColor: "var(--bg-card)",
                       border: "1px solid var(--border-color)",

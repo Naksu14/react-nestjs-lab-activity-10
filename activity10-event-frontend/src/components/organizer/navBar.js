@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "../../services/authService";
 
 const NavBar = () => {
-  const queryClient = useQueryClient();
-
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("theme") === "dark"
   );
@@ -40,6 +38,7 @@ const NavBar = () => {
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="p-2.5 rounded-xl hover:scale-105 transition-all"
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           style={{
             backgroundColor: "var(--border-color)",
             color: "var(--text-primary)",
@@ -55,14 +54,18 @@ const NavBar = () => {
 
         <button className="flex items-center space-x-3 group">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold leading-tight">{currentUser?.firstname} {currentUser?.lastname}</p>
+            <p className="text-xs font-bold leading-tight">
+              {currentUser?.firstname} {currentUser?.lastname}
+            </p>
             <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
               {userRole?.charAt(0).toUpperCase() + userRole?.slice(1)} Account
             </p>
           </div>
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200 dark:shadow-none">
             {currentUser
-              ? `${currentUser.firstname.charAt(0)}${currentUser.lastname.charAt(0)}`
+              ? `${currentUser.firstname.charAt(
+                  0
+                )}${currentUser.lastname.charAt(0)}`
               : "UN"}
           </div>
         </button>

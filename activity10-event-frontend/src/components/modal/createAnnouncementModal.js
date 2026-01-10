@@ -55,7 +55,7 @@ const CreateAnnouncementModal = ({ isOpen, onClose, initialEventId }) => {
       });
       queryClient.invalidateQueries({ queryKey: ["organizerEvents"] });
       queryClient.invalidateQueries({ queryKey: ["allAnnouncements"] });
-      onClose(); // Close modal on success
+      onClose();
     } catch (error) {
       console.error("Error creating announcement:", error);
     } finally {

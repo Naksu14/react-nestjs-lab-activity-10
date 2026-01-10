@@ -98,7 +98,7 @@ const Attendees = () => {
     >
       <Sidebar />
 
-      <div className="ml-[17rem] flex-1 flex flex-col">
+      <div className="ml-[16.5rem] flex-1 flex flex-col">
         <NavBar />
 
         <main className="p-8 max-w-7xl mx-auto w-full">
@@ -215,18 +215,18 @@ const Attendees = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filtered.map((a) => (
+                  {filtered.map((a, idx) => (
                     <tr
                       key={a.id}
                       className="group transition-colors"
                       onMouseEnter={() => setHoverRow(a.id)}
                       onMouseLeave={() => setHoverRow(null)}
                       style={{
-                        backgroundColor:
-                          hoverRow === a.id
-                            ? "var(--row-hover)"
-                            : "transparent",
-                      }}
+                          backgroundColor:
+                            idx % 2 === 0
+                              ? "transparent"
+                              : "var(--table-body)",
+                        }}
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center space-x-4">

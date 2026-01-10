@@ -55,12 +55,11 @@ export const getAllAnnouncementsBySender = async () => {
   const token = localStorage.getItem("authToken");
   const { data } = await api.get(`/event-announcements/organizer`, {
     headers: {
-      Authorization: `Bearer ${token}`, 
+      Authorization: `Bearer ${token}`,
     },
   });
   return data;
 };
-
 
 export const createAnnouncement = async (announcementData) => {
   const token = localStorage.getItem("authToken");
@@ -72,6 +71,19 @@ export const createAnnouncement = async (announcementData) => {
   return data;
 };
 
+export const updateAnnouncement = async (announcementId, announcementData) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.patch(
+    `/event-announcements/${announcementId}`,
+    announcementData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return data;
+};
 
 export const updateEvent = async (eventId, eventData) => {
   const token = localStorage.getItem("authToken");

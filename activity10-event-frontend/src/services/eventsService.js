@@ -74,3 +74,13 @@ export const getEventCheckinsByScannedby = async (scanned_by) => {
   });
   return data;
 };
+
+export const deleteAnnouncement = async (announcementId) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.delete(`/event-announcements/${announcementId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};

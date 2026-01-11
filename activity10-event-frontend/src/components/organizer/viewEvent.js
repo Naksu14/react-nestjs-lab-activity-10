@@ -7,6 +7,8 @@ import {
   Clock,
   ShieldCheck,
   Search,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,8 +16,11 @@ import {
   getAnnouncementsByEvent,
   getRegistrationsByEventId,
 } from "../../services/organizerService";
+import { deleteAnnouncement } from "../../services/eventsService";
 import { registerForEvent, getUserRegistrationForEvent } from "../../services/attendeesService";
 import { getCurrentUser } from "../../services/authService";
+import CreateAnnouncementModal from "../modal/createAnnouncementModal";
+import DeleteAnnouncementModal from "../modal/deleteAnnouncementModal";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -24,6 +29,13 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
   const queryClient = useQueryClient();
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState(null);
+
+  const handleDeleteAnnouncement = async () => {
+    await deleteAnnouncement(announcementToDelete.id);
+    queryClient.invalidateQueries({ queryKey: ["eventAnnouncements", event?.id] });
+  };
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -112,6 +124,9 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
     100,
     event.capacity ? Math.round((registeredCount / event.capacity) * 100) : 0
   );
+  const checkInCount = (registrations || []).filter(
+    (r) => r.check_in_status === "checked-in"
+  ).length;
 
   return (
     <div className=" space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -221,6 +236,19 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 >
                   Event Updates
                 </h2>
+                {!isAdminView && (
+                  <button
+                    onClick={() => setIsAnnouncementModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+                    style={{
+                      backgroundColor: "var(--accent-color)",
+                      color: "#fff",
+                    }}
+                  >
+                    <Plus size={14} />
+                    New Update
+                  </button>
+                )}
               </div>
 
               {isAnnouncementsLoading ? (
@@ -249,18 +277,32 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                         >
                           {a.title}
                         </h3>
-                        <span
-                          className="text-[11px]"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          {new Date(a.sent_at).toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-[11px]"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            {new Date(a.sent_at).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          {!isAdminView && (
+                            <button
+                              onClick={() => setAnnouncementToDelete(a)}
+                              className="p-1 rounded hover:bg-red-500/10 transition-colors"
+                              title="Delete announcement"
+                            >
+                              <Trash2 
+                                size={14} 
+                                style={{ color: "#ef4444" }} 
+                              />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p
                         className="text-xs"
@@ -311,7 +353,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-4 gap-3 mb-4">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
                   <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Registered</p>
                   <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{registeredCount}</p>
@@ -323,6 +365,10 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
                   <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Spots Left</p>
                   <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{capacityLeft}</p>
+                </div>
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--border-color)" }}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>Check-Ins</p>
+                  <p className="text-2xl font-bold mt-1" style={{ color: "var(--text-primary)" }}>{checkInCount}</p>
                 </div>
               </div>
 
@@ -364,7 +410,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                   No attendees found.
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 text-left">
                   {filteredAttendees.map((registration) => {
                     const initials = `${registration.user?.firstname?.[0] || ''}${registration.user?.lastname?.[0] || ''}`.toUpperCase();
                     const isCancelled = registration.registration_status === 'cancelled';
@@ -533,14 +579,32 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
             ) : (
               <button
                 className="w-full mt-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
-                onClick={() => navigate(`/organizer/scanner`)}
+                onClick={() => navigate(`/organizer/scanner`, { state: { eventId: event.id, eventTitle: event.title_event } })}
               >
-                Manage Registrations
+                Manage Event Check-In
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Create Announcement Modal */}
+      <CreateAnnouncementModal
+        isOpen={isAnnouncementModalOpen}
+        onClose={() => {
+          setIsAnnouncementModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["eventAnnouncements", event?.id] });
+        }}
+        initialEventId={event?.id}
+      />
+
+      {/* Delete Announcement Modal */}
+      <DeleteAnnouncementModal
+        isOpen={!!announcementToDelete}
+        onClose={() => setAnnouncementToDelete(null)}
+        onConfirm={handleDeleteAnnouncement}
+        announcementTitle={announcementToDelete?.title}
+      />
     </div>
   );
 };

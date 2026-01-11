@@ -11,17 +11,22 @@ import {
   Search,
   Eye,
   Edit,
+  Trash2,
 } from "lucide-react";
 import CreateAnnouncementModal from "../../../components/modal/createAnnouncementModal";
 import ViewAnnouncementModal from "../../../components/modal/viewAnnouncementModal";
 import EditAnnouncementModal from "../../../components/modal/editAnnouncementModal";
-import { useQuery } from "@tanstack/react-query";
+import DeleteAnnouncementModal from "../../../components/modal/deleteAnnouncementModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllAnnouncementsBySender } from "../../../services/organizerService";
+import { deleteAnnouncement } from "../../../services/eventsService";
 
 const Announcements = () => {
+  const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [viewAnnouncement, setViewAnnouncement] = useState(null);
   const [editAnnouncement, setEditAnnouncement] = useState(null);
+  const [announcementToDelete, setAnnouncementToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("date_desc");
 
@@ -78,6 +83,11 @@ const Announcements = () => {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleDeleteAnnouncement = async () => {
+    await deleteAnnouncement(announcementToDelete.id);
+    queryClient.invalidateQueries({ queryKey: ["allAnnouncements"] });
   };
 
   return (
@@ -279,14 +289,24 @@ const Announcements = () => {
                             <Eye size={18} />
                           </button>
                           {a.event?.status === "published" && (
-                            <button
-                              onClick={() => setEditAnnouncement(a)}
-                              className="p-2 rounded-lg hover:bg-slate-500/10 transition-colors opacity-70"
-                              style={{ color: "var(--accent-color)" }}
-                              title="Edit announcement"
-                            >
-                              <Edit size={18} />
-                            </button>
+                            <>
+                              <button
+                                onClick={() => setEditAnnouncement(a)}
+                                className="p-2 rounded-lg hover:bg-slate-500/10 transition-colors opacity-70"
+                                style={{ color: "var(--accent-color)" }}
+                                title="Edit announcement"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => setAnnouncementToDelete(a)}
+                                className="p-2 rounded-lg hover:bg-red-500/10 transition-colors opacity-70"
+                                style={{ color: "#ef4444" }}
+                                title="Delete announcement"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </>
                           )}
                         </td>
                       </tr>
@@ -332,6 +352,12 @@ const Announcements = () => {
         isOpen={!!viewAnnouncement}
         announcement={viewAnnouncement}
         onClose={() => setViewAnnouncement(null)}
+      />
+      <DeleteAnnouncementModal
+        isOpen={!!announcementToDelete}
+        onClose={() => setAnnouncementToDelete(null)}
+        onConfirm={handleDeleteAnnouncement}
+        announcementTitle={announcementToDelete?.title}
       />
     </div>
   );

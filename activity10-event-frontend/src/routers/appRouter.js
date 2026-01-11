@@ -6,7 +6,6 @@ import ForgotPassword from "../modules/auth/forgotpassword";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import EventLandingPage from "../modules/pages/attendeeSidePages/event-landing-page";
 
-import EventOrganizerPage from "../modules/pages/organizerSidePages/event-organizer-page";
 import MyEvent from "../modules/pages/organizerSidePages/event-page";
 import Attendees from "../modules/pages/organizerSidePages/attendees-page";
 import QrScanner from "../modules/pages/organizerSidePages/qr-scanner-page";
@@ -68,14 +67,6 @@ const AppRouter = () => {
         />
 
         {/* Protected Organizer Routes - Only organizers */}
-        <Route
-          path="/organizer"
-          element={
-            <ProtectedRoute allowedRoles={["organizer"]}>
-              <EventOrganizerPage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/organizer/myevents"
           element={

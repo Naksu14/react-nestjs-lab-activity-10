@@ -1,14 +1,23 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
-import { Camera, CheckCircle, XCircle, RefreshCw, Upload, User, Calendar, Ticket, Clock } from "lucide-react";
-import { findticketByCode, createEventCheckin, getEventCheckinsByScannedby, getEventCheckinsByTicketid } from "../../../services/eventsService";
+import { Camera, CheckCircle, XCircle, RefreshCw, Upload, User, Calendar, Ticket, Clock, ArrowLeft } from "lucide-react";
+import { findticketByCode, createEventCheckin, getEventCheckinsByScannedby, updateTicket } from "../../../services/eventsService";
 import { getCurrentUser } from "../../../services/authService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const QrScanner = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  
+  // Get event info from navigation state (when coming from viewEvent)
+  const eventFromState = location.state?.eventId ? {
+    id: location.state.eventId,
+    title: location.state.eventTitle
+  } : null;
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
   const [error, setError] = useState(null);
@@ -43,46 +52,72 @@ const QrScanner = () => {
   };
 
   const handleScanResult = async (code, source) => {
-      if (!scannerRef.current) return;
-
-      // STOP CAMERA IMMEDIATELY
-      await scannerRef.current.stop();
-      setIsActive(false);
+      // Stop camera only if it's running
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        await scannerRef.current.stop();
+        setIsActive(false);
+      }
       setAlreadyCheckedIn(false);
+      setError(null);
 
-      const ticketData = await findticketByCode(code);
-      console.log(`QR Code from ${source}:`, ticketData);
-      setScanResult(ticketData);
-      
-      if (ticketData.status === "used") {
-        setAlreadyCheckedIn(true);
-      } else {
-        // Not checked in yet - create new checkin
-        try {
-          const checkinData = await createEventCheckin({
-            ticket_id: ticketData.id,
-            event_id: ticketData.event_id,
-            scanned_by: currentUser?.id,
-            scan_time: new Date().toISOString(),
-          });
+      try {
+        const ticketData = await findticketByCode(code);
+        setScanResult(ticketData);
+        
+        if (ticketData.status === "used") {
+          setError("This ticket has already been used for check-in!");
+          setAlreadyCheckedIn(true);
+          startCamera();
+        } else if (ticketData.status === "cancelled") {
+          setError("This ticket has been cancelled!");
+          setAlreadyCheckedIn(true);
+          startCamera();
+        } else if (ticketData.status !== "valid") {
+          setError(`Invalid ticket status: ${ticketData.status}`);
+          setAlreadyCheckedIn(true);
+          startCamera();
+        } else if (new Date(ticketData.event.start_datetime) > new Date()) {
+          const startDate = new Date(ticketData.event.start_datetime).toLocaleString();
+          setError(`Event has not started yet. Starts at: ${startDate}`);
+          setAlreadyCheckedIn(true);
+          startCamera();
+        } else if (new Date(ticketData.event.end_datetime) < new Date()) {
+          const endDate = new Date(ticketData.event.end_datetime).toLocaleString();
+          setError(`Event has already ended on: ${endDate}`);
+          setAlreadyCheckedIn(true);
+          startCamera();
+        } else {
+          // Valid ticket - create new checkin
+          try {
+            await createEventCheckin({
+              ticket_id: ticketData.id,
+              event_id: ticketData.event_id,
+              scanned_by: currentUser?.id,
+              scan_time: new Date().toISOString(),
+            });
 
-          await updateTicket(ticketData.id, { status: "used" });
-          
-          queryClient.invalidateQueries({ queryKey: ["eventCheckins", currentUser?.id] });
-          setAlreadyCheckedIn(false);
-          console.log("Check-in recorded successfully", checkinData);
-        } catch (err) {
-          console.error("Error recording check-in:", err);
-          setError("Failed to record check-in");
+            await updateTicket(ticketData.id, { status: "used" });
+            
+            queryClient.invalidateQueries({ queryKey: ["eventCheckins", currentUser?.id] });
+            setAlreadyCheckedIn(false);
+            startCamera();
+          } catch (err) {
+            console.error("Check-in error:", err);
+            setError(err.response?.data?.message || "Failed to record check-in. Please try again.");
+            setAlreadyCheckedIn(true);
+          }
         }
+      } catch (err) {
+        console.error("Ticket lookup error:", err);
+        setScanResult(null);
+        setError("Ticket not found or invalid QR code!");
+        setAlreadyCheckedIn(true);
+        startCamera();
       }
   };
 
-
   // Scan using camera
   const startCamera = async () => {
-    setError(null);
-
     try {
       initScanner();
 
@@ -119,17 +154,13 @@ const QrScanner = () => {
       // Clear the file scanner
       await fileScanner.clear();
 
-      const ticketData = await findticketByCode(result);
-      setScanResult(ticketData || null);
-      console.log("QR Code from file:", ticketData);
+      await handleScanResult(result, "file");
     } catch (err) {
-      console.error("File scan error:", err);
       setError("No QR code found in image");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
-
 
   const reset = () => {
     setError(null);
@@ -167,12 +198,31 @@ const QrScanner = () => {
                   border: "1px solid var(--border-color)",
                 }}
               >
-                <div className="p-4">
-                  <h2
+                <div className="p-4 flex items-center gap-4 border-b" style={{ borderColor: "var(--border-color)" }}>
+                  <button
+                    onClick={() => {
+                      // Stop camera before navigating
+                      if (scannerRef.current && scannerRef.current.isScanning) {
+                        scannerRef.current.stop().catch(() => {});
+                      }
+                      navigate('/organizer/myevents', { 
+                        state: { selectedEventId: eventFromState?.id } 
+                      });
+                    }}
+                    className="p-2 rounded-lg transition-colors hover:opacity-80"
+                    style={{
+                      backgroundColor: "var(--bg-secondary)",
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div className="flex-1">
+                    <h2
                     className="text-lg font-bold"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    Check-in Scanner
+                    Event Check-In Scanner {eventFromState?.title && ` - ${eventFromState.title}`}
                   </h2>
                   <p
                     className="text-sm mt-1"
@@ -180,6 +230,7 @@ const QrScanner = () => {
                   >
                     Use your device camera to scan attendee ticket QR codes.
                   </p>
+                  </div>
                 </div>
 
                 <div className="p-6 flex flex-col md:flex-row items-start gap-6">
@@ -205,7 +256,8 @@ const QrScanner = () => {
                     <div className="mt-3 flex items-center space-x-3">
                       <button
                         onClick={startCamera}
-                        className="px-4 py-2 rounded-lg font-semibold"
+                        disabled={isActive}
+                        className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
                         style={{
                           backgroundColor: "var(--accent-color)",
                           color: "#fff",
@@ -215,14 +267,15 @@ const QrScanner = () => {
                       </button>
                       <button
                         onClick={stopCamera}
-                        className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80"
+                          disabled={!isActive}
+                        className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
                         style={{ backgroundColor: "#f87171", color: "#fff" }}
                       >
                         Stop
                       </button>
                       <button
                         onClick={reset}
-                        className="px-3 py-2 rounded-lg"
+                        className="px-3 py-3 rounded-lg"
                         style={{
                           backgroundColor: "var(--bg-card)",
                           border: "1px solid var(--border-color)",
@@ -281,7 +334,7 @@ const QrScanner = () => {
 
                       <div>
                         {/* Already Checked In Warning */}
-                        {scanResult && alreadyCheckedIn && (
+                        {alreadyCheckedIn && error && (
                           <div
                             className="py-3 px-4 rounded-xl mb-4 flex items-center gap-2"
                             style={{
@@ -290,13 +343,13 @@ const QrScanner = () => {
                               color: "#ef4444",
                             }}
                           >
-                            <XCircle size={18} />
-                            <span className="text-sm font-medium">This ticket has already been used!</span>
+                            <XCircle size={18} className="shrink-0" />
+                            <span className="text-sm font-medium">{error}</span>
                           </div>
                         )}
 
                         {/* New Check-in Success */}
-                        {scanResult && !alreadyCheckedIn && (
+                        {scanResult && !alreadyCheckedIn && !error && (
                           <div
                             className="py-3 px-4 rounded-xl mb-4 flex items-center gap-2"
                             style={{
@@ -405,19 +458,6 @@ const QrScanner = () => {
                             </p>
                           </div>
                         )}
-                        {error && (
-                          <div
-                            className="py-3 px-4 rounded-xl mb-3 flex justify-center items-center gap-2"
-                            style={{
-                              backgroundColor: "rgba(239, 68, 68, 0.1)",
-                              border: "1px solid rgba(239, 68, 68, 0.2)",
-                              color: "#ef4444",
-                            }}
-                          >
-                            <XCircle size={16} />
-                            <span className="text-sm font-medium">{error}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -444,7 +484,7 @@ const QrScanner = () => {
                       className="font-bold text-base"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      Check-in History
+                      Attendee Check-In List {eventFromState?.title && ` - ${eventFromState.title}`}
                     </h3>
                     {previousCheckins?.length > 0 && (
                       <span
@@ -471,7 +511,9 @@ const QrScanner = () => {
                         </p>
                       </div>
                     )}
-                    {previousCheckins?.map((checkin) => (
+                    {(previousCheckins || [])
+                    .filter((checkin) => !eventFromState?.id || checkin.event_id === eventFromState.id)
+                    .map((checkin) => (
                       <div
                         key={checkin.id}
                         className="p-4 rounded-xl transition-colors hover:opacity-90"

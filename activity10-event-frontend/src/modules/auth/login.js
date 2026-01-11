@@ -17,7 +17,7 @@ const Login = () => {
       if (userRole === "admin") {
         navigate("/admin/events-management", { replace: true });
       } else if (userRole === "organizer") {
-        navigate("/organizer", { replace: true });
+        navigate("/organizer/myevents", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
@@ -35,7 +35,7 @@ const Login = () => {
         if (role === "admin") {
           navigate("/admin/events-management");
         } else if (role === "organizer") {
-          navigate("/organizer");
+          navigate("/organizer/myevents");
         } else {
           navigate("/");
         }

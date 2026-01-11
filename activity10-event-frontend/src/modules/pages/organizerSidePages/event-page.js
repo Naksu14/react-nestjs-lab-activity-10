@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
 import CreateEventModal from "../../../components/modal/createEventModal";
@@ -25,6 +26,7 @@ import { getCurrentUser } from "../../../services/authService";
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 const MyEvent = () => {
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -46,6 +48,20 @@ const MyEvent = () => {
     queryKey: ["organizerEvents"],
     queryFn: () => getAllEventsByOrganizer(),
   });
+
+  // Auto-select event when coming back from scanner with selectedEventId
+  useEffect(() => {
+    if (location.state?.selectedEventId && organizerEvents) {
+      const eventToSelect = organizerEvents.find(
+        (ev) => ev.id === location.state.selectedEventId
+      );
+      if (eventToSelect) {
+        setSelectedEvent(eventToSelect);
+      }
+      // Clear the state to prevent re-selecting on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, organizerEvents]);
 
   const filteredEvents = (organizerEvents || []).filter((ev) => {
     const search = searchTerm.toLowerCase();

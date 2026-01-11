@@ -114,27 +114,44 @@ const CreateAnnouncementModal = ({ isOpen, onClose, initialEventId }) => {
               <label className="text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                 <Calendar size={12} /> Target Event
               </label>
-              <select
-                value={formData.event_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, event_id: e.target.value })
-                }
-                required
-                className="w-full px-4 py-2.5 rounded-xl text-sm bg-transparent border transition-all focus:ring-2 focus:ring-blue-500/20 outline-none"
-                style={{
-                  borderColor: "var(--border-color)",
-                  backgroundColor: "var(--bg-secondary)",
-                }}
-              >
-                <option value="">Choose an event...</option>
-                {(organizerEvents || [])
-                  .filter((e) => e.status === "published")
-                  .map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.title_event}
-                    </option>
-                  ))}
-              </select>
+              {initialEventId ? (
+                // Show locked event when opened from specific event
+                <div
+                  className="w-full px-4 py-2.5 rounded-xl text-sm border flex items-center gap-2"
+                  style={{
+                    borderColor: "var(--border-color)",
+                    backgroundColor: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  <span className="font-medium">
+                    {(organizerEvents || []).find(e => e.id === initialEventId)?.title_event || "Selected Event"}
+                  </span>
+                </div>
+              ) : (
+                // Show dropdown when no specific event
+                <select
+                  value={formData.event_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, event_id: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl text-sm bg-transparent border transition-all focus:ring-2 focus:ring-blue-500/20 outline-none"
+                  style={{
+                    borderColor: "var(--border-color)",
+                    backgroundColor: "var(--bg-secondary)",
+                  }}
+                >
+                  <option value="">Choose an event...</option>
+                  {(organizerEvents || [])
+                    .filter((e) => e.status === "published")
+                    .map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.title_event}
+                      </option>
+                    ))}
+                </select>
+              )}
             </div>
 
             {/* Title */}

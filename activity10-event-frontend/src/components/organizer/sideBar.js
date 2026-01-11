@@ -19,11 +19,6 @@ const Sidebar = () => {
       group: "General",
       items: [
         {
-          name: "Dashboard",
-          icon: <LayoutDashboard size={20} />,
-          path: "/organizer",
-        },
-        {
           name: "My Events",
           icon: <Calendar size={20} />,
           path: "/organizer/myevents",

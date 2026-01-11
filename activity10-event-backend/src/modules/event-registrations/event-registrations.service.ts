@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateEventRegistrationDto } from './dto/create-event-registration.dto';
 import { UpdateEventRegistrationDto } from './dto/update-event-registration.dto';
 import {
   EventRegistration,
+  EmailStatus,
   RegistrationStatus,
 } from './entities/event-registration.entity';
 import { Event } from '../events/entities/event.entity';
@@ -55,6 +60,7 @@ export class EventRegistrationsService {
       registration_status:
         createEventRegistrationDto.registration_status ??
         RegistrationStatus.REGISTERED,
+      email_status: EmailStatus.PENDING,
       event,
       user,
     };
@@ -74,7 +80,8 @@ export class EventRegistrationsService {
       status: TicketStatus.VALID,
     });
 
-    await this.sendTicketEmail({
+    this.scheduleTicketEmail({
+      registrationId: savedRegistration.id,
       to: user.email,
       attendeeName: `${user.firstname} ${user.lastname}`.trim(),
       eventTitle: event.title_event,
@@ -131,9 +138,15 @@ export class EventRegistrationsService {
     const registration = await this.findOne(id);
 
     if (updateEventRegistrationDto.registration_status === RegistrationStatus.CANCELLED) {
+      if (registration.email_status !== EmailStatus.PENDING) {
+        throw new BadRequestException(
+          'Registration cannot be cancelled after the email has been processed.',
+        );
+      }
       registration.registration_status = RegistrationStatus.CANCELLED;
       registration.cancelled_at = new Date();
       registration.updated_at = new Date();
+      registration.email_status = EmailStatus.CANCELLED;
       await this.eventTicketsService.cancelByRegistrationId(registration.id);
     } else {
       Object.assign(registration, updateEventRegistrationDto);
@@ -295,4 +308,48 @@ export class EventRegistrationsService {
       ],
     });
   }
+
+      private scheduleTicketEmail(params: {
+        registrationId: number;
+        to: string;
+        attendeeName: string;
+        eventTitle: string;
+        eventLocation: string;
+        startDate: Date;
+        endDate: Date;
+        ticketCode: string;
+      }) {
+        const { registrationId, ...emailParams } = params;
+        const defaultDelayMs = 30_000;
+        const delayMsFromSeconds = Number(process.env.TICKET_EMAIL_DELAY_SECONDS || process.env.TICKET_EMAIL_DELAY_SEC) * 1000;
+        const delayMsDirect = Number(process.env.TICKET_EMAIL_DELAY_MS);
+        const delay = Number.isFinite(delayMsDirect)
+          ? delayMsDirect
+          : Number.isFinite(delayMsFromSeconds)
+            ? delayMsFromSeconds
+            : defaultDelayMs;
+
+        setTimeout(async () => {
+          const registration = await this.eventRegistrationsRepository.findOne({
+            where: { id: registrationId },
+          });
+
+          if (!registration) return;
+          if (
+            registration.registration_status === RegistrationStatus.CANCELLED ||
+            registration.email_status !== EmailStatus.PENDING
+          ) {
+            return;
+          }
+
+          try {
+            await this.sendTicketEmail(emailParams);
+            registration.email_status = EmailStatus.SENT;
+            registration.updated_at = new Date();
+            await this.eventRegistrationsRepository.save(registration);
+          } catch (err) {
+            console.error('Failed to send ticket email', err);
+          }
+        }, delay);
+      }
 }

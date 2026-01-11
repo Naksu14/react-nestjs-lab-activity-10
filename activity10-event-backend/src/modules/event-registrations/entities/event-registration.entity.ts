@@ -14,6 +14,12 @@ export enum RegistrationStatus {
   CANCELLED = 'cancelled',
 }
 
+export enum EmailStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  CANCELLED = 'cancelled',
+}
+
 @Entity('event_registrations')
 export class EventRegistration {
   @PrimaryGeneratedColumn()
@@ -39,6 +45,13 @@ export class EventRegistration {
     default: RegistrationStatus.REGISTERED,
   })
   registration_status: RegistrationStatus;
+
+  @Column({
+    type: 'enum',
+    enum: EmailStatus,
+    default: EmailStatus.PENDING,
+  })
+  email_status: EmailStatus;
 
   @CreateDateColumn({ type: 'timestamp' })
   registered_at: Date;

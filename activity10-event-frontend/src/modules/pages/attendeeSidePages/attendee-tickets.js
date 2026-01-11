@@ -163,10 +163,9 @@ const AttendeeTickets = () => {
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-semibold capitalize
-                              ${
-                                status === "valid"
-                                  ? "bg-green-100 text-green-700"
-                                  : status === "used"
+                              ${status === "valid"
+                                ? "bg-green-100 text-green-700"
+                                : status === "used"
                                   ? "bg-gray-200 text-gray-700"
                                   : "bg-red-100 text-red-700"
                               }`}
@@ -220,8 +219,8 @@ const AttendeeTickets = () => {
       </section>
 
       {qrTicketId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm relative">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 px-4">
+          <div className="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
             <button
               className="absolute top-3 right-3 text-sm text-gray-500 hover:text-gray-700"
               onClick={() => setQrTicketId(null)}

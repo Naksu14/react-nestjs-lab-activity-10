@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const AuthContext = createContext();
 
@@ -6,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Check if user is already logged in when app loads
@@ -24,6 +26,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("userRole", role);
     setIsAuthenticated(true);
     setUserRole(role);
+    queryClient?.invalidateQueries({ queryKey: ["currentUser"] });
   };
 
   const logout = () => {
@@ -31,6 +34,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("userRole");
     setIsAuthenticated(false);
     setUserRole(null);
+    queryClient?.setQueryData(["currentUser"], null);
+    queryClient?.cancelQueries({ queryKey: ["currentUser"] });
   };
 
   return (

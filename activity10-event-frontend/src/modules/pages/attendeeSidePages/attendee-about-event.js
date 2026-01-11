@@ -277,6 +277,71 @@ const AboutEvent = () => {
                                     ))}
                             </div>
                         </div>
+                        <section className="max-w-7xl mx-auto px-4 mt-4 mb-5">
+                            <div
+                                className="rounded-lg border p-6 shadow-sm"
+                                style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)" }}
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2
+                                        className="text-sm font-bold uppercase tracking-wider"
+                                        style={{ color: "var(--text-muted)" }}
+                                    >
+                                        Event Updates
+                                    </h2>
+                                </div>
+
+                                {isAnnouncementsLoading ? (
+                                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                        Loading updates...
+                                    </p>
+                                ) : !announcements || announcements.length === 0 ? (
+                                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                                        No announcements for this event yet.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {announcements.map((a) => (
+                                            <div
+                                                key={a.id}
+                                                className="p-4 rounded-lg"
+                                                style={{
+                                                    backgroundColor: "var(--bg-secondary)",
+                                                    border: "1px solid var(--border-color)",
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h3
+                                                        className="text-sm font-semibold"
+                                                        style={{ color: "var(--text-primary)" }}
+                                                    >
+                                                        {a.title}
+                                                    </h3>
+                                                    <span
+                                                        className="text-[11px]"
+                                                        style={{ color: "var(--text-muted)" }}
+                                                    >
+                                                        {new Date(a.sent_at).toLocaleString("en-US", {
+                                                            month: "short",
+                                                            day: "numeric",
+                                                            year: "numeric",
+                                                            hour: "numeric",
+                                                            minute: "2-digit",
+                                                        })}
+                                                    </span>
+                                                </div>
+                                                <p
+                                                    className="text-xs"
+                                                    style={{ color: "var(--text-muted)" }}
+                                                >
+                                                    {a.message}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </section>
                     </div>
                 </div>
 
@@ -307,13 +372,12 @@ const AboutEvent = () => {
                                         )}
                                     </div>
                                     <span
-                                        className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                                            timeLeft.kind === "completed"
+                                        className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${timeLeft.kind === "completed"
                                                 ? "bg-emerald-100 text-emerald-700"
                                                 : timeLeft.kind === "ongoing"
                                                     ? "bg-blue-100 text-blue-700"
                                                     : "bg-[var(--accent-color)]/10 text-[var(--accent-color)]"
-                                        }`}
+                                            }`}
                                     >
                                         {timeLeft.kind === "completed"
                                             ? "Completed"
@@ -401,13 +465,12 @@ const AboutEvent = () => {
                             </div>
 
                             <button
-                                className={`mt-1 w-full py-3 rounded-lg font-semibold text-base transition shadow ${
-                                    alreadyRegistered
+                                className={`mt-1 w-full py-3 rounded-lg font-semibold text-base transition shadow ${alreadyRegistered
                                         ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                                         : isRegisterEnabled
                                             ? "bg-[var(--accent-color)] hover:bg-[var(--accent-color)]/90 text-white"
                                             : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                                }`}
+                                    }`}
                                 disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
                                 aria-disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
                                 onClick={handleRegister}
@@ -455,71 +518,7 @@ const AboutEvent = () => {
                 </div>
             </section>
 
-            <section className="max-w-7xl mx-auto px-4 mt-4">
-                <div
-                    className="rounded-lg border p-6 shadow-sm"
-                    style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)" }}
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2
-                            className="text-sm font-bold uppercase tracking-wider"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            Event Updates
-                        </h2>
-                    </div>
 
-                    {isAnnouncementsLoading ? (
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                            Loading updates...
-                        </p>
-                    ) : !announcements || announcements.length === 0 ? (
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                            No announcements for this event yet.
-                        </p>
-                    ) : (
-                        <div className="space-y-3">
-                            {announcements.map((a) => (
-                                <div
-                                    key={a.id}
-                                    className="p-4 rounded-lg"
-                                    style={{
-                                        backgroundColor: "var(--bg-secondary)",
-                                        border: "1px solid var(--border-color)",
-                                    }}
-                                >
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h3
-                                            className="text-sm font-semibold"
-                                            style={{ color: "var(--text-primary)" }}
-                                        >
-                                            {a.title}
-                                        </h3>
-                                        <span
-                                            className="text-[11px]"
-                                            style={{ color: "var(--text-muted)" }}
-                                        >
-                                            {new Date(a.sent_at).toLocaleString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                                hour: "numeric",
-                                                minute: "2-digit",
-                                            })}
-                                        </span>
-                                    </div>
-                                    <p
-                                        className="text-xs"
-                                        style={{ color: "var(--text-muted)" }}
-                                    >
-                                        {a.message}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </section>
         </div>
     );
 };

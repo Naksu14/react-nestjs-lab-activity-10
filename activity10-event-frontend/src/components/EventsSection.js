@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import useLandingEvents from "../hooks/landingHooks/event-landinghook";
 import { getAllRegistrations } from "../services/attendeesService";
 import fallbackImage from "../assets/images/sample-event-1.jpg";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const filters = [
   { label: "Published Events", type: "published" },
@@ -175,20 +176,20 @@ const EventsSection = () => {
           </div>
 
           <button
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-10 h-10 items-center justify-center hover:bg-white transition"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-12 h-12 items-center justify-center hover:bg-white transition"
             onClick={handlePrev}
             aria-label="Previous events"
             disabled={loading || error}
           >
-            ‹
+            <ChevronLeft />
           </button>
           <button
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-10 h-10 items-center justify-center hover:bg-white transition"
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-12 h-12 items-center justify-center hover:bg-white transition"
             onClick={handleNext}
             aria-label="Next events"
             disabled={loading || error}
           >
-            ›
+            <ChevronRight />
           </button>
         </div>
         <div className="flex justify-center w-full mt-8">

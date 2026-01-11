@@ -18,3 +18,53 @@ export const getPublishedAndCompletedEvents = async () => {
     return status === "published" || status === "completed";
   });
 };
+
+export const findticketByCode = async (ticketCode) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(`/event-tickets/ticket-code/${ticketCode}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
+export const getEventCheckinsByTicketid = async (ticket_id) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(`/event-checkins/ticket-id/${ticket_id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
+export const createEventCheckin = async (checkinData) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.post("/event-checkins", checkinData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
+export const updateTicket = async (ticketId, updateData) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.patch(`/event-tickets/${ticketId}`, updateData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
+export const getEventCheckinsByScannedby = async (scanned_by) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(`/event-checkins/scanned-by/${scanned_by}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};

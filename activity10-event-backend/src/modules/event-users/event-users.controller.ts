@@ -90,7 +90,7 @@ export class EventUsersController {
   @Post('signup')
   @ApiOperation({ summary: 'Event user signup' })
   @ApiResponse({ status: 201, description: 'The signed up event user', type: CreateEventUserDto })
-  async signupUser(@Body() createUserDto: CreateEventUserDto): Promise<EventUser> {
+  async signupUser(@Body() createUserDto: CreateEventUserDto): Promise<EventUser | { message: string }> {
     return this.eventUsersService.registerAttendee(createUserDto);
   }
 

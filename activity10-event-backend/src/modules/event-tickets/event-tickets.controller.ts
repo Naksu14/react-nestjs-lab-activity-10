@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { EventTicketsService } from './event-tickets.service';
 import { CreateEventTicketDto } from './dto/create-event-ticket.dto';
 import { UpdateEventTicketDto } from './dto/update-event-ticket.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('event-tickets')
 @Controller('event-tickets')
@@ -33,10 +34,19 @@ export class EventTicketsController {
     return this.eventTicketsService.findOne(+id);
   }
 
+  @Get('ticket-code/:ticketCode')
+  @ApiOperation({ summary: 'Get event ticket by ticket code' })
+  @ApiResponse({ status: 200, description: 'Event ticket', type: CreateEventTicketDto })
+  @UseGuards(AuthGuard('jwt'))
+  findByTicketCode(@Param('ticketCode') ticketCode: string) {
+    return this.eventTicketsService.findByTicketCode(ticketCode);
+  }
+
   // Update an existing event ticket
   @Patch(':id')
   @ApiOperation({ summary: 'Update an event ticket' })
   @ApiResponse({ status: 200, description: 'The updated event ticket', type: CreateEventTicketDto })
+  @UseGuards(AuthGuard('jwt'))
   update(@Param('id') id: string, @Body() updateEventTicketDto: UpdateEventTicketDto) {
     return this.eventTicketsService.update(+id, updateEventTicketDto);
   }

@@ -59,6 +59,13 @@ export class EventTicketsService {
     });
   }
 
+  async findByTicketCode(ticketCode: string) {
+    return this.eventTicketsRepository.findOne({
+      where: { ticket_code: ticketCode },
+      relations: ['event', 'registration', 'registration.user'],
+    });
+  }
+
   async cancelByRegistrationId(registrationId: number) {
     if (!registrationId) return;
 

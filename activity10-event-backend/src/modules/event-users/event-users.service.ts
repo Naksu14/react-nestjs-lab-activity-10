@@ -98,7 +98,15 @@ export class EventUsersService {
   // attendees signup
   async registerAttendee(
     createUserDto: CreateEventUserDto,
-  ): Promise<EventUser> {
+  ): Promise<EventUser | { message: string }> {
+    
+    const existing = await this.usersRepository.findOneBy({
+      email: createUserDto.email,
+    });
+    if (existing) {
+      return { message: 'Email already exists' };
+    }
+
     const { password, ...userData } = createUserDto;
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = this.usersRepository.create({
@@ -106,7 +114,7 @@ export class EventUsersService {
       password: hashedPassword,
       isActive: true,
     });
-    return this.usersRepository.save(newUser);
+    return await this.usersRepository.save(newUser);
   }
   
   // Update current authenticated user

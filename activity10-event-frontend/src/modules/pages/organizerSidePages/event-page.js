@@ -54,9 +54,14 @@ const MyEvent = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Sort by createdAt (latest first) then paginate
+  const sortedEvents = [...filteredEvents].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
   // Pagination calculations
-  const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
-  const paginatedEvents = filteredEvents.slice(
+  const totalPages = Math.ceil(sortedEvents.length / eventsPerPage);
+  const paginatedEvents = sortedEvents.slice(
     (currentPage - 1) * eventsPerPage,
     currentPage * eventsPerPage
   );
@@ -173,7 +178,7 @@ const MyEvent = () => {
 
               {/* Events Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {paginatedEvents.map((ev) => (
+                {(paginatedEvents || []).map((ev) => (
                   <div
                     key={ev.id}
                     className="event-card group relative rounded-lg p-6 transition-all duration-300"

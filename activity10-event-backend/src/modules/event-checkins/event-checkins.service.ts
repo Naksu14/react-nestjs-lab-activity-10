@@ -59,15 +59,32 @@ export class EventCheckinsService {
   // Get all event check-ins
   async findAll() {
     return this.eventCheckinsRepository.find({
-      relations: ['event', 'ticket'],
+      relations: ['event', 'ticket', 'ticket.registration', 'ticket.registration.user'],
+    });
+  }
+
+  async findAllCheckinsByScannedby(scanned_by: number) {
+    return this.eventCheckinsRepository.find({
+      where: { scanned_by },
+      relations: ['event', 'ticket', 'ticket.registration', 'ticket.registration.user'],
+      order: { scan_time: 'DESC' },
+    });
+  }
+
+  // Get all check-ins by ticket ID
+  async findAllCheckinsByTicketId(ticket_id: number) {
+    return this.eventCheckinsRepository.find({
+      where: { ticket_id },
+      relations: ['event', 'ticket', 'ticket.registration', 'ticket.registration.user'],
+      order: { scan_time: 'DESC' },
     });
   }
 
   // Get a single event check-in by ID
-  async findOne(id: number) {
+  async findOne(ticket_id: number) {
     return this.eventCheckinsRepository.findOne({
-      where: { id },
-      relations: ['event', 'ticket'],
+      where: { ticket_id },
+      relations: ['event', 'ticket', 'ticket.registration', 'ticket.registration.user'],
     });
   }
 

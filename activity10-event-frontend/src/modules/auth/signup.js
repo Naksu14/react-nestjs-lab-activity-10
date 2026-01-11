@@ -25,12 +25,10 @@ const Signup = () => {
       isActive: true,
     })
       .then(() => {
-        // On successful signup, auto-login the user
         //handleAutoLogin();
         handleGoToLogin();
       })
       .catch((error) => {
-        console.error("Signup failed:", error);
         const msg =
           error?.response?.data?.message || error?.message || "Signup failed";
         setErrorMessage(msg);
@@ -46,11 +44,10 @@ const Signup = () => {
         navigate("/chat");
       })
       .catch((err) => {
-        console.error("Auto-login failed:", err);
-        const msg =
-          err?.response?.data?.message || err?.message || "Auto-login failed";
-        setErrorMessage(msg);
-      })
+          const msg =
+            err?.response?.data?.message || err?.message || "Auto-login failed";
+          setErrorMessage(msg);
+        })
       .finally(() => setIsSubmitting(false));
   };
 
@@ -169,7 +166,6 @@ const Signup = () => {
           <button
             className="w-full bg-violet-600 text-white py-2 rounded-md hover:bg-violet-700 transition duration-200"
             type="submit"
-            onClick={handleSignup}
             disabled={isSubmitting}
           >
             {isSubmitting ? "Signing up..." : "Sign Up"}

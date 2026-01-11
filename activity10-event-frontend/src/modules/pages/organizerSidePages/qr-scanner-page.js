@@ -2,16 +2,33 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import Sidebar from "../../../components/organizer/sideBar";
 import NavBar from "../../../components/organizer/navBar";
-import { Camera, CheckCircle, XCircle, RefreshCw, Upload } from "lucide-react";
+import { Camera, CheckCircle, XCircle, RefreshCw, Upload, User, Calendar, Ticket, Clock } from "lucide-react";
+import { findticketByCode, createEventCheckin, getEventCheckinsByScannedby, getEventCheckinsByTicketid } from "../../../services/eventsService";
+import { getCurrentUser } from "../../../services/authService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const QrScanner = () => {
+  const queryClient = useQueryClient();
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
-  const [scanned, setScanned] = useState(null);
   const [error, setError] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [scanResult, setScanResult] = useState(null);
   const [isActive, setIsActive] = useState(false);
+  const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
 
+  const {
+    data: currentUser,
+  } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => getCurrentUser(),
+  });
+  
+  const { data: previousCheckins } = useQuery({
+    queryKey: ["eventCheckins", currentUser?.id],
+    queryFn: () => getEventCheckinsByScannedby(currentUser?.id),
+    enabled: !!currentUser?.id,
+  });
+  
   const stopCamera = useCallback(() => {
     if (scannerRef.current && scannerRef.current.isScanning) {
       scannerRef.current.stop().catch(() => {});
@@ -19,60 +36,105 @@ const QrScanner = () => {
     setIsActive(false);
   }, []);
 
+  const initScanner = () => {
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5Qrcode("qr-reader");
+    }
+  };
+
+  const handleScanResult = async (code, source) => {
+      if (!scannerRef.current) return;
+
+      // STOP CAMERA IMMEDIATELY
+      await scannerRef.current.stop();
+      setIsActive(false);
+      setAlreadyCheckedIn(false);
+
+      const ticketData = await findticketByCode(code);
+      console.log(`QR Code from ${source}:`, ticketData);
+      setScanResult(ticketData);
+      
+      if (ticketData.status === "used") {
+        setAlreadyCheckedIn(true);
+      } else {
+        // Not checked in yet - create new checkin
+        try {
+          const checkinData = await createEventCheckin({
+            ticket_id: ticketData.id,
+            event_id: ticketData.event_id,
+            scanned_by: currentUser?.id,
+            scan_time: new Date().toISOString(),
+          });
+
+          await updateTicket(ticketData.id, { status: "used" });
+          
+          queryClient.invalidateQueries({ queryKey: ["eventCheckins", currentUser?.id] });
+          setAlreadyCheckedIn(false);
+          console.log("Check-in recorded successfully", checkinData);
+        } catch (err) {
+          console.error("Error recording check-in:", err);
+          setError("Failed to record check-in");
+        }
+      }
+  };
+
+
+  // Scan using camera
   const startCamera = async () => {
     setError(null);
+
     try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode("qr-reader");
-      }
+      initScanner();
 
       await scannerRef.current.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          // On successful scan
-          setScanned((prev) => {
-            if (prev !== decodedText) {
-              setHistory((h) =>
-                [{ code: decodedText, at: Date.now() }, ...h].slice(0, 20)
-              );
-            }
-            return decodedText;
-          });
-        },
-        () => {} // Ignore scan errors
+        (decodedText) => handleScanResult(decodedText, "camera"),
+        () => {} // ignore scan errors
       );
+
       setIsActive(true);
-    } catch (err) {
+    } catch {
       setError("Camera access denied or not available");
-      console.error(err);
     }
   };
 
-  // Scan QR from uploaded image file
+  // Scan QR from uploaded image
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setError(null);
+
     try {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5Qrcode("qr-reader");
+      // Stop camera if running before file scan
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        await scannerRef.current.stop();
+        setIsActive(false);
       }
 
-      const result = await scannerRef.current.scanFile(file, true);
-      setScanned(result);
-      setHistory((h) => [{ code: result, at: Date.now() }, ...h].slice(0, 20));
+      // Create a fresh scanner instance for file scanning
+      const fileScanner = new Html5Qrcode("qr-reader");
+      const result = await fileScanner.scanFile(file, true);
+      
+      // Clear the file scanner
+      await fileScanner.clear();
+
+      const ticketData = await findticketByCode(result);
+      setScanResult(ticketData || null);
+      console.log("QR Code from file:", ticketData);
     } catch (err) {
+      console.error("File scan error:", err);
       setError("No QR code found in image");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    // Reset file input
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+
   const reset = () => {
-    setScanned(null);
     setError(null);
+    setScanResult(null);
+    setAlreadyCheckedIn(false);
   };
 
   useEffect(() => {
@@ -96,7 +158,6 @@ const QrScanner = () => {
         <NavBar />
 
         <main className="p-8 max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Scanner Panel */}
             <div className="col-span-1 lg:col-span-2">
               <div
@@ -122,20 +183,12 @@ const QrScanner = () => {
                 </div>
 
                 <div className="p-6 flex flex-col md:flex-row items-start gap-6">
-                  <div
-                    style={{ minWidth: 320, minHeight: 240, maxWidth: "100%" }}
-                    className="flex-1"
-                  >
+                  <div className="flex-1 min-w-80 min-h-60 max-w-full">
                     <div className="relative border rounded-lg" style={{ borderColor: "var(--border-color)" }}>
                       <div
                         id="qr-reader"
-                        style={{
-                          width: "100%",
-                          height: 320,
-                          backgroundColor: "var(--bg-secondary)",
-                          borderRadius: 8,
-                          overflow: "hidden",
-                        }}
+                        className="w-full h-80 rounded-lg overflow-hidden"
+                        style={{ backgroundColor: "var(--bg-secondary)" }}
                       />
                       <div
                         className="absolute left-4 top-4 px-3 py-1 rounded-md flex items-center z-10"
@@ -162,7 +215,8 @@ const QrScanner = () => {
                       </button>
                       <button
                         onClick={stopCamera}
-                        className="px-4 py-2 rounded-lg font-semibold bg-red-400 hover:bg-red-600 transition-colors"
+                        className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: "#f87171", color: "#fff" }}
                       >
                         Stop
                       </button>
@@ -202,67 +256,166 @@ const QrScanner = () => {
                     </div>
                   </div>
 
-                  <div className="w-full md:w-1/3">
+                  <div className="w-full md:w-2/4">
                     <div
+                      className="p-5 rounded-lg shadow-sm text-left"
                       style={{
-                        padding: 12,
-                        borderRadius: 8,
                         border: "1px solid var(--border-color)",
                         backgroundColor: "var(--bg-card)",
                       }}
                     >
-                      <h3
-                        className="font-bold"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        Latest Scan
-                      </h3>
-                      <div className="mt-3">
-                        {error && (
+                      <div className="flex justify-between items-center gap-2 mb-4">
+                        <h3
+                          className="font-bold text-base"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          Scan Result
+                        </h3>
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-muted)" }}
+                        >
+                          {scanResult?.registration.registration_status || "No Ticket Scanned"}
+                        </span>
+                      </div>
+
+                      <div>
+                        {/* Already Checked In Warning */}
+                        {scanResult && alreadyCheckedIn && (
                           <div
-                            className="py-2 px-3 rounded mb-2"
+                            className="py-3 px-4 rounded-xl mb-4 flex items-center gap-2"
                             style={{
-                              backgroundColor: "rgba(255,0,0,0.06)",
-                              color: "var(--text-primary)",
+                              backgroundColor: "rgba(239, 68, 68, 0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.2)",
+                              color: "#ef4444",
                             }}
                           >
-                            <XCircle size={14} className="inline-block mr-2" />{" "}
-                            {error}
+                            <XCircle size={18} />
+                            <span className="text-sm font-medium">This ticket has already been used!</span>
                           </div>
                         )}
-                        {scanned ? (
-                          <div>
-                            <p
-                              style={{
-                                color: "var(--text-muted)",
-                                fontSize: 12,
-                              }}
-                            >
-                              Ticket Code
-                            </p>
-                            <p
-                              className="font-bold"
-                              style={{ color: "var(--text-primary)" }}
-                            >
-                              {scanned}
-                            </p>
-                            <button
-                              className="mt-3 px-3 py-2 rounded-2xl"
-                              style={{
-                                backgroundColor: "var(--accent-color)",
-                                color: "#fff",
-                              }}
-                            >
-                              <CheckCircle
-                                size={16}
-                                className="inline-block mr-2"
-                              />{" "}
-                              Verify
-                            </button>
+
+                        {/* New Check-in Success */}
+                        {scanResult && !alreadyCheckedIn && (
+                          <div
+                            className="py-3 px-4 rounded-xl mb-4 flex items-center gap-2"
+                            style={{
+                              backgroundColor: "rgba(34, 197, 94, 0.1)",
+                              border: "1px solid rgba(34, 197, 94, 0.2)",
+                              color: "#22c55e",
+                            }}
+                          >
+                            <CheckCircle size={18} />
+                            <span className="text-sm font-medium">Check-in successful!</span>
+                          </div>
+                        )}
+
+                        {scanResult ? (
+                          <div className="space-y-4">
+                            {/* Attendee */}
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: "var(--bg-secondary)" }}
+                              >
+                                <User size={18} style={{ color: "var(--text-muted)" }} />
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
+                                  Attendee
+                                </p>
+                                <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                                  {scanResult.registration?.user
+                                    ? `${scanResult.registration.user.firstname} ${scanResult.registration.user.lastname}`
+                                    : "-"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Event */}
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: "var(--bg-secondary)" }}
+                              >
+                                <Calendar size={18} style={{ color: "var(--text-muted)" }} />
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
+                                  Event
+                                </p>
+                                <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                                  {scanResult.event?.title_event || scanResult.event?.title || "-"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Start Time */}
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: "var(--bg-secondary)" }}
+                              >
+                                <Clock size={18} style={{ color: "var(--text-muted)" }} />
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
+                                  Start Date & Time
+                                </p>
+                                <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                                  {scanResult.event?.start_datetime
+                                    ? new Date(scanResult.event.start_datetime).toLocaleString()
+                                    : "-"}
+                                </p>
+                              </div>
+                            </div>
+                            {/* End Date & Time */}
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: "var(--bg-secondary)" }}
+                              >
+                                <Clock size={18} style={{ color: "var(--text-muted)" }} />
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
+                                  End Date & Time
+                                </p>
+                                <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                                  {scanResult.event?.end_datetime
+                                    ? new Date(scanResult.event.end_datetime).toLocaleString()
+                                    : "-"}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         ) : (
-                          <div style={{ color: "var(--text-muted)" }}>
-                            No code scanned yet.
+                          <div className="text-center py-6">
+                            <div
+                              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                              style={{ backgroundColor: "var(--bg-secondary)" }}
+                            >
+                              <Camera size={28} style={{ color: "var(--text-muted)" }} />
+                            </div>
+                            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                              No code scanned yet
+                            </p>
+                            <p className="text-xs mt-1 opacity-70" style={{ color: "var(--text-muted)" }}>
+                              Point your camera at a QR code
+                            </p>
+                          </div>
+                        )}
+                        {error && (
+                          <div
+                            className="py-3 px-4 rounded-xl mb-3 flex justify-center items-center gap-2"
+                            style={{
+                              backgroundColor: "rgba(239, 68, 68, 0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.2)",
+                              color: "#ef4444",
+                            }}
+                          >
+                            <XCircle size={16} />
+                            <span className="text-sm font-medium">{error}</span>
                           </div>
                         )}
                       </div>
@@ -270,59 +423,123 @@ const QrScanner = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* History */}
-            <div>
-              <div
-                className="rounded-lg p-4"
-                style={{
-                  backgroundColor: "var(--bg-card)",
-                  border: "1px solid var(--border-color)",
-                }}
-              >
-                <h3
-                  className="font-bold"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Scan History
-                </h3>
+              {/* History moved below scanner */}
+              <div className="mt-6">
                 <div
-                  className="mt-3 space-y-2"
-                  style={{ maxHeight: 400, overflow: "auto" }}
+                  className="rounded-lg p-5 shadow-lg"
+                  style={{
+                    backgroundColor: "var(--bg-card)",
+                    border: "1px solid var(--border-color)",
+                  }}
                 >
-                  {history.length === 0 && (
-                    <div style={{ color: "var(--text-muted)" }}>
-                      No scans yet
-                    </div>
-                  )}
-                  {history.map((h, i) => (
+                  <div className="flex items-center gap-2 mb-4">
                     <div
-                      key={i}
-                      style={{
-                        padding: 8,
-                        borderRadius: 6,
-                        border: "1px solid var(--border-color)",
-                        backgroundColor: "var(--bg-secondary)",
-                      }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: "var(--bg-secondary)" }}
                     >
+                      <Clock size={16} style={{ color: "var(--text-muted)" }} />
+                    </div>
+                    <h3
+                      className="font-bold text-base"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      Check-in History
+                    </h3>
+                    {previousCheckins?.length > 0 && (
+                      <span
+                        className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-muted)" }}
+                      >
+                        {previousCheckins.length} check-in{previousCheckins.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="space-y-2 max-h-96 overflow-auto"
+                  >
+                    {(!previousCheckins || previousCheckins.length === 0) && (
+                      <div className="text-center py-8">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
+                          style={{ backgroundColor: "var(--bg-secondary)" }}
+                        >
+                          <Ticket size={24} style={{ color: "var(--text-muted)", opacity: 0.5 }} />
+                        </div>
+                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                          No check-ins yet
+                        </p>
+                      </div>
+                    )}
+                    {previousCheckins?.map((checkin) => (
                       <div
+                        key={checkin.id}
+                        className="p-4 rounded-xl transition-colors hover:opacity-90"
                         style={{
-                          color: "var(--text-primary)",
-                          fontWeight: 600,
+                          border: "1px solid var(--border-color)",
+                          backgroundColor: "var(--bg-secondary)",
                         }}
                       >
-                        {h.code}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                              style={{ backgroundColor: "var(--bg-card)" }}
+                            >
+                              <User size={18} style={{ color: "var(--accent-color)" }} />
+                            </div>
+                            <div>
+                              <p
+                                className="font-semibold text-sm"
+                                style={{ color: "var(--text-primary)" }}
+                              >
+                                {checkin.ticket?.registration?.user
+                                  ? `${checkin.ticket.registration.user.firstname} ${checkin.ticket.registration.user.lastname}`
+                                  : "Unknown Attendee"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span
+                              className="px-2 py-0.5 rounded-full text-xs font-semibold capitalize"
+                              style={{
+                                backgroundColor: checkin.scan_status === "success" ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                                color: checkin.scan_status === "success" ? "#22c55e" : "#ef4444",
+                              }}
+                            >
+                              {checkin.scan_status || "success"}
+                            </span>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              {checkin.scan_time
+                                ? new Date(checkin.scan_time).toLocaleString()
+                                : "-"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2 pt-2 flex items-center gap-4" style={{ borderTop: "1px solid var(--border-color)" }}>
+                          <div className="flex items-center gap-1.5">
+                            <Ticket size={12} style={{ color: "var(--text-muted)" }} />
+                            <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                              {checkin.event?.title_event || "-"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Calendar size={12} style={{ color: "var(--text-muted)" }} />
+                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              {checkin.event?.start_datetime
+                                ? new Date(checkin.event.start_datetime).toLocaleDateString()
+                                : "-"}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ color: "var(--text-muted)", fontSize: 11 }}>
-                        {new Date(h.at).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
+
             </div>
-          </div>
+
         </main>
       </div>
     </div>

@@ -11,7 +11,7 @@ const LogoutModal = ({ isOpen, onClose }) => {
   const handleLogout = () => {
     logout();
     onClose();
-    navigate("/login", { replace: true });
+    navigate("/landing", { replace: true });
   };
 
   if (!isOpen) return null;

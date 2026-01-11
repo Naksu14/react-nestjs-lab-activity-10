@@ -115,6 +115,7 @@ const Announcements = () => {
             </div>
             <button
               onClick={() => setShowModal(true)}
+              title="Create a new announcement"
               className="px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-transform active:scale-95"
               style={{ backgroundColor: "var(--accent-color)", color: "#fff" }}
             >
@@ -136,6 +137,7 @@ const Announcements = () => {
               />
               <input
                 type="text"
+                title="Search announcements by title, message, or event"
                 placeholder="Search title and event..."
                 className="w-full rounded-2xl py-3 pl-12 pr-4 focus:ring-2 outline-none transition-all text-sm"
                 value={searchTerm}
@@ -152,6 +154,7 @@ const Announcements = () => {
             </div>
             <div className="flex items-center gap-3">
               <select
+                title="Sort announcements"
                 value={sortOption}
                 onChange={(e) => {
                   setSortOption(e.target.value);
@@ -235,16 +238,17 @@ const Announcements = () => {
                       >
                         <td className="px-6 py-2">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-sm mb-0.5 group-hover:text-[var(--accent-color)]">
+                            <span title={a.title} className="font-semibold text-sm mb-0.5 group-hover:text-[var(--accent-color)]">
                               {a.title}
                             </span>
-                            <span className="text-xs opacity-60 line-clamp-1 max-w-[300px]">
+                            <span title={a.message} className="text-xs opacity-60 line-clamp-1 max-w-[300px]">
                               {a.message}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-5">
                           <span
+                            title={a.event?.title_event || "General"}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium "
                             style={{
                               backgroundColor: "rgba(var(--accent-rgb), 0.1)",
@@ -257,6 +261,7 @@ const Announcements = () => {
                         </td>
                          <td className="px-6 py-5">
                           <span
+                            title={a.event?.status || ""}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium "
                             style={{
                               backgroundColor: "rgba(var(--accent-rgb), 0.1)",
@@ -269,13 +274,13 @@ const Announcements = () => {
                         </td>
 
                         <td className="px-6 py-5">
-                          <div className="flex items-center gap-2 text-sm opacity-80">
+                          <div title={`Recipients: ${a.recipients}`} className="flex items-center gap-2 text-sm opacity-80">
                             <Users size={14} className="opacity-40" />{" "}
                             {a.recipients}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-right">
-                          <span className="text-xs font-medium opacity-60">
+                          <span title={new Date(a.sent_at).toLocaleString()} className="text-xs font-medium opacity-60">
                             {formatDate(a.sent_at)}
                           </span>
                         </td>

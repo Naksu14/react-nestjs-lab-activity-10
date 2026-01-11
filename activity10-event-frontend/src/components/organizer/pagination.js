@@ -9,6 +9,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       <button
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
+        title="Previous page"
         className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-slate-500/10"
         style={{
           borderColor: "var(--border-color)",
@@ -24,6 +25,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           <button
             key={page}
             onClick={() => onPageChange(page)}
+            title={`Go to page ${page}`}
             className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all flex items-center justify-center`}
             style={{
               backgroundColor:
@@ -42,6 +44,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       <button
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
+        title="Next page"
         className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-slate-500/10"
         style={{
           borderColor: "var(--border-color)",

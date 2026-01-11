@@ -44,10 +44,10 @@ const Attendees = () => {
       <div className="ml-[16.5rem] flex-1 flex flex-col">
         <NavBar />
 
-        <main className="p-8 max-w-7xl mx-auto w-full">
+        <main className="p-4 max-w-7xl mx-auto w-full">
           {/* Header Section */}
-          <div className="mb-10">
-            <h1 className="text-4xl font-black tracking-tight">
+          <div className="mb-4 text-left">
+            <h1 className="text-3xl font-black tracking-tight">
               Attendee List
             </h1>
             <p

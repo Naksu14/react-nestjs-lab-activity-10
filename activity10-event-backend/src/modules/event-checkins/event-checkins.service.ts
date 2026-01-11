@@ -71,6 +71,14 @@ export class EventCheckinsService {
     });
   }
 
+  async findAllCheckinsByEventId(event_id: number) {
+    return this.eventCheckinsRepository.find({
+      where: { event_id },
+      relations: ['event', 'ticket', 'ticket.registration', 'ticket.registration.user'],
+      order: { scan_time: 'DESC' },
+    });
+  }
+
   // Get all check-ins by ticket ID
   async findAllCheckinsByTicketId(ticket_id: number) {
     return this.eventCheckinsRepository.find({

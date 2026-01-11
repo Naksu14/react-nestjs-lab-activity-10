@@ -37,6 +37,9 @@ const QrScanner = () => {
     queryFn: () => getEventCheckinsByScannedby(currentUser?.id),
     enabled: !!currentUser?.id,
   });
+
+  // Filter checkins by selected event if provided via navigation state
+  const filteredCheckins = (previousCheckins || []).filter((checkin) => !eventFromState?.id || checkin.event_id === eventFromState.id);
   
   const stopCamera = useCallback(() => {
     if (scannerRef.current && scannerRef.current.isScanning) {
@@ -214,6 +217,7 @@ const QrScanner = () => {
                       backgroundColor: "var(--bg-secondary)",
                       color: "var(--text-primary)",
                     }}
+                    title="Back to My Events"
                   >
                     <ArrowLeft size={20} />
                   </button>
@@ -249,7 +253,7 @@ const QrScanner = () => {
                         }}
                       >
                         <Camera size={14} className="inline-block mr-2" />
-                        <span>{isActive ? "Live" : "Inactive"}</span>
+                        <span title={isActive ? "Camera is live" : "Camera is inactive"}>{isActive ? "Live" : "Inactive"}</span>
                       </div>
                     </div>
 
@@ -257,6 +261,7 @@ const QrScanner = () => {
                       <button
                         onClick={startCamera}
                         disabled={isActive}
+                        title="Start camera"
                         className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
                         style={{
                           backgroundColor: "var(--accent-color)",
@@ -267,7 +272,8 @@ const QrScanner = () => {
                       </button>
                       <button
                         onClick={stopCamera}
-                          disabled={!isActive}
+                        disabled={!isActive}
+                        title="Stop camera"
                         className="px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-80 disabled:opacity-50"
                         style={{ backgroundColor: "#f87171", color: "#fff" }}
                       >
@@ -275,6 +281,7 @@ const QrScanner = () => {
                       </button>
                       <button
                         onClick={reset}
+                        title="Reset scanner"
                         className="px-3 py-3 rounded-lg"
                         style={{
                           backgroundColor: "var(--bg-card)",
@@ -296,6 +303,7 @@ const QrScanner = () => {
                       />
                       <label
                         htmlFor="qr-upload"
+                        title="Upload image with QR code"
                         className="px-4 py-2 rounded-2xl font-semibold cursor-pointer flex items-center"
                         style={{
                           backgroundColor: "var(--bg-card)",
@@ -486,19 +494,19 @@ const QrScanner = () => {
                     >
                       Attendee Check-In List {eventFromState?.title && ` - ${eventFromState.title}`}
                     </h3>
-                    {previousCheckins?.length > 0 && (
+                    {filteredCheckins.length > 0 && (
                       <span
                         className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={{ backgroundColor: "var(--bg-secondary)", color: "var(--text-muted)" }}
                       >
-                        {previousCheckins.length} check-in{previousCheckins.length !== 1 ? "s" : ""}
+                        {filteredCheckins.length} check-in{filteredCheckins.length !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>
                   <div
                     className="space-y-2 max-h-96 overflow-auto"
                   >
-                    {(!previousCheckins || previousCheckins.length === 0) && (
+                    {filteredCheckins.length === 0 && (
                       <div className="text-center py-8">
                         <div
                           className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
@@ -511,8 +519,7 @@ const QrScanner = () => {
                         </p>
                       </div>
                     )}
-                    {(previousCheckins || [])
-                    .filter((checkin) => !eventFromState?.id || checkin.event_id === eventFromState.id)
+                    {filteredCheckins
                     .map((checkin) => (
                       <div
                         key={checkin.id}

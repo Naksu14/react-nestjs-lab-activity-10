@@ -103,6 +103,7 @@ const DeleteAnnouncementModal = ({ isOpen, onClose, onConfirm, announcementTitle
           <button
             onClick={onClose}
             disabled={isDeleting}
+            title="Cancel"
             className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
             style={{
               backgroundColor: "var(--bg-secondary)",
@@ -115,6 +116,7 @@ const DeleteAnnouncementModal = ({ isOpen, onClose, onConfirm, announcementTitle
           <button
             onClick={handleConfirm}
             disabled={isDeleting}
+            title="Confirm delete"
             className="flex-1 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
             style={{
               backgroundColor: "#ef4444",

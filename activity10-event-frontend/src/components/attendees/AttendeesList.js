@@ -130,6 +130,7 @@ const AttendeesList = ({
           />
           <input
             type="text"
+              title="Search attendees"
             placeholder="Search name, email, or ticket code..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -145,6 +146,7 @@ const AttendeesList = ({
         <div className="flex items-center gap-2">
           <select
             value={selectedEventId}
+            title="Filter by Event"
             onChange={(e) => setSelectedEventId(e.target.value)}
             className="rounded-2xl py-3 px-4 text-sm"
             style={{
@@ -163,6 +165,7 @@ const AttendeesList = ({
 
           <select
             value={status}
+            title="Filter by Status"
             onChange={(e) => setStatus(e.target.value)}
             className="rounded-2xl py-3 px-4 text-sm"
             style={{
@@ -185,6 +188,7 @@ const AttendeesList = ({
           <input
             type="date"
             value={startDate}
+            title="Filter start date"
             onChange={(e) => setStartDate(e.target.value)}
             className="rounded-2xl py-3 px-3 text-sm"
             style={{
@@ -196,6 +200,7 @@ const AttendeesList = ({
           <span style={{ color: "var(--text-muted)" }}>to</span>
           <input
             type="date"
+            title="Filter end date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="rounded-2xl py-3 px-3 text-sm"
@@ -208,6 +213,7 @@ const AttendeesList = ({
         </div>
         <button
           onClick={handleExport}
+          title="Export Attendees"
           className="flex items-center space-x-2 px-5 py-3 rounded-2xl font-bold transition-all active:scale-95"
           style={{
             backgroundColor: "var(--accent-color)",

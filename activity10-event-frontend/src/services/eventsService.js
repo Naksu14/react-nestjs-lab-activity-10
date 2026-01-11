@@ -75,6 +75,16 @@ export const getEventCheckinsByScannedby = async (scanned_by) => {
   return data;
 };
 
+export const getAllCheckinsByEventId = async (event_id) => {
+  const token = localStorage.getItem("authToken");
+  const { data } = await api.get(`/event-checkins/event/${event_id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data;
+};
+
 export const deleteAnnouncement = async (announcementId) => {
   const token = localStorage.getItem("authToken");
   const { data } = await api.delete(`/event-announcements/${announcementId}`, {
@@ -84,3 +94,4 @@ export const deleteAnnouncement = async (announcementId) => {
   });
   return data;
 };
+

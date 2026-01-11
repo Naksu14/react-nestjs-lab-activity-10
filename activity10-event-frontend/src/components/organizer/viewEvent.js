@@ -16,7 +16,7 @@ import {
   getAnnouncementsByEvent,
   getRegistrationsByEventId,
 } from "../../services/organizerService";
-import { deleteAnnouncement } from "../../services/eventsService";
+import { deleteAnnouncement, getAllCheckinsByEventId } from "../../services/eventsService";
 import { registerForEvent, getUserRegistrationForEvent } from "../../services/attendeesService";
 import { getCurrentUser } from "../../services/authService";
 import CreateAnnouncementModal from "../modal/createAnnouncementModal";
@@ -47,6 +47,12 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
     queryKey: ["userRegistration", event?.id, currentUser?.id],
     queryFn: () => getUserRegistrationForEvent(event.id, currentUser.id),
     enabled: isAdminView && !!event?.id && !!currentUser?.id,
+  });
+
+  const { data: eventCheckins } = useQuery({
+    queryKey: ["eventCheckins", event?.id],
+    queryFn: () => getAllCheckinsByEventId(event.id),
+    enabled: !!event?.id,
   });
 
   const registerMutation = useMutation({
@@ -124,9 +130,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
     100,
     event.capacity ? Math.round((registeredCount / event.capacity) * 100) : 0
   );
-  const checkInCount = (registrations || []).filter(
-    (r) => r.check_in_status === "checked-in"
-  ).length;
+  const checkInCount = (eventCheckins || []).length;
 
   return (
     <div className=" space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -135,6 +139,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
         <button
           type="button"
           onClick={onBack}
+          title="Back to My Events"
           className="group flex items-center gap-2 px-1 py-2 text-sm font-medium transition-all hover:text-[var(--accent-color)]"
           style={{ color: "var(--text-muted)" }}
         >
@@ -239,6 +244,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 {!isAdminView && (
                   <button
                     onClick={() => setIsAnnouncementModalOpen(true)}
+                    title="Create new update"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
                     style={{
                       backgroundColor: "var(--accent-color)",
@@ -260,13 +266,13 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                   No announcements for this event yet.
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 text-left">
                   {announcements.map((a) => (
                     <div
                       key={a.id}
                       className="p-4 rounded-lg"
                       style={{
-                        backgroundColor: "var(--bg-secondary)",
+                        backgroundColor: "var(--bg-main)",
                         border: "1px solid var(--border-color)",
                       }}
                     >
@@ -326,7 +332,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 borderColor: "var(--border-color)",
               }}
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between mb-3 text-left">
                 <div className="flex items-start gap-2">
                   <div className="h-6 w-6 rounded-full bg-[#7c3aed] flex items-center justify-center text-white mt-0.5">
                     <Users size={14} />
@@ -391,6 +397,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                 />
                 <input
                   type="text"
+                  title="Search attendees by name, email, or ticket code"
                   value={attendeeSearch}
                   onChange={(e) => setAttendeeSearch(e.target.value)}
                   placeholder="Search attendees by name, email, or ticket code..."
@@ -512,7 +519,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
 
               {/* Time */}
               <div className="flex gap-4">
-                <div className="mt-1 p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                <div className="mt-1 p-2 rounded-lg flex justify-center items-center bg-purple-500/10 text-purple-500">
                   <Clock size={20} />
                 </div>
                 <div>
@@ -565,6 +572,7 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                     ? "bg-indigo-600 text-white shadow-indigo-600/20 cursor-wait opacity-90"
                     : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 active:scale-95 cursor-pointer"
                 }`}
+                title={userRegistration ? "Already Registered" : "Register for this Event"}
                 onClick={handleRegister}
                 disabled={!!userRegistration || registerMutation.isPending || registerSuccess}
               >
@@ -576,9 +584,10 @@ const ViewEvent = ({ event, onBack, isAdminView = false }) => {
                   ? "✓ Registered Successfully!"
                   : "Register for this Event"}
               </button>
-            ) : (
+              ) : (
               <button
                 className="w-full mt-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
+                title="Manage Event Check-In"
                 onClick={() => navigate(`/organizer/scanner`, { state: { eventId: event.id, eventTitle: event.title_event } })}
               >
                 Manage Event Check-In

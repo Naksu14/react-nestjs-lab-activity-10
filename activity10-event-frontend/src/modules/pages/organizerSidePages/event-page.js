@@ -150,6 +150,7 @@ const MyEvent = () => {
                     backgroundColor: "var(--accent-color)",
                     color: "#fff",
                   }}
+                  title="Create New Event"
                   onClick={() => setIsCreateModalOpen(true)}
                 >
                   <Plus size={20} />
@@ -167,6 +168,7 @@ const MyEvent = () => {
                   />
                   <input
                     type="text"
+                    title="Search by event name or location"
                     placeholder="Search by event name or location..."
                     className="w-full rounded-2xl py-3 pl-12 pr-4 outline-none transition-all text-sm"
                     value={searchTerm}
@@ -180,6 +182,7 @@ const MyEvent = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <select
+                    title="Filter by Status"
                     value={statusFilter}
                     onChange={handleStatusChange}
                     className="rounded-2xl py-3 px-3 text-sm outline-none"
@@ -313,6 +316,7 @@ const MyEvent = () => {
                               setEventToEdit(ev);
                               setIsUpdateModalOpen(true);
                             }}
+                            title="Edit Event"
                             className="p-2.5 rounded-xl transition-all"
                             style={{
                               backgroundColor: "var(--bg-secondary)",
@@ -327,6 +331,7 @@ const MyEvent = () => {
                               setEventToDelete(ev);
                               setIsDeleteModalOpen(true);
                             }}
+                            title="Delete Event"
                             className="p-2.5 rounded-xl transition-all"
                             style={{
                               backgroundColor: "var(--bg-secondary)",

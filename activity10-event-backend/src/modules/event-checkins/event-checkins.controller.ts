@@ -36,6 +36,15 @@ export class EventCheckinsController {
     return this.eventCheckinsService.findAllCheckinsByScannedby(scanned_by);
   }
 
+  // get all check-ins by event ID
+  @Get('event/:event_id')
+  @ApiOperation({ summary: 'Retrieve all event check-ins by event ID' })
+  @ApiResponse({ status: 200, description: 'List of event check-ins for the specified event.' })
+  @UseGuards(AuthGuard('jwt'))
+  findAllByEventId(@Param('event_id') event_id: number) {
+    return this.eventCheckinsService.findAllCheckinsByEventId(event_id);
+  }
+
   // Get all event check-ins by ticket ID
   @Get('ticket-id/:ticket_id')
   @ApiOperation({ summary: 'Retrieve all event check-ins by ticket ID' })

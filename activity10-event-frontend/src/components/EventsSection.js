@@ -91,7 +91,7 @@ const EventsSection = () => {
               key={filter.type}
               className={`px-5 py-2 rounded-md font-semibold text-sm md:text-base transition-colors border border-[var(--accent-color)] focus:outline-none ${activeFilter === filter.type
                   ? "bg-[var(--accent-color)] text-white shadow"
-                  : "bg-white text-[var(--accent-color)] hover:bg-[var(--accent-color)]/10"
+                  : "bg-[var(--bg-card)] text-[var(--accent-color)] hover:bg-[var(--accent-color)]/10"
                 }`}
               onClick={() => {
                 setActiveFilter(filter.type);
@@ -117,16 +117,16 @@ const EventsSection = () => {
                 style={{ width: `${100 / pageCount}%` }}
               >
                 {loading ? (
-                  <div className="col-span-full text-center text-gray-500 py-12">Loading events…</div>
+                  <div className="col-span-full text-center text-[var(--text-muted)] py-12">Loading events…</div>
                 ) : error ? (
                   <div className="col-span-full text-center text-red-500 py-12">{error}</div>
                 ) : page.length === 0 ? (
-                  <div className="col-span-full text-center text-gray-400 py-12">No events found.</div>
+                  <div className="col-span-full text-center text-[var(--text-muted)] py-12">No events found.</div>
                 ) : (
                   page.map((event) => (
                     <div
                       key={event.id}
-                      className="group bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden transition-transform hover:scale-[1.02] border border-gray-100 relative"
+                      className="group bg-[var(--bg-card)] rounded-2xl shadow-lg flex flex-col overflow-hidden transition-transform hover:scale-[1.02] border border-[var(--border-color)] relative text-[var(--text-primary)]"
                     >
                       <img
                         src={getImage(event)}
@@ -141,15 +141,15 @@ const EventsSection = () => {
                           </h3>
 
                         </div>
-                        <span className="text-xs md:text-sm text-gray-600">
+                        <span className="text-xs md:text-sm text-[var(--text-muted)]">
                           {event.location || "Location to be announced"}
                         </span>
-                        <span className="text-xs md:text-sm text-gray-500">
+                        <span className="text-xs md:text-sm text-[var(--text-muted)]">
                           {formatDateTime(event.startDate)}
                         </span>
                         <div className="flex items-center gap-2 flex-wrap mt-1">
                           {activeFilter !== "completed" ? (
-                            <span className="text-[11px] md:text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
+                            <span className="text-[11px] md:text-xs bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-1 rounded font-semibold">
                               Registered: {registrationCounts[event.id] ?? 0}
                               {event.capacity ? ` / ${event.capacity}` : ""}
                             </span>
@@ -176,7 +176,7 @@ const EventsSection = () => {
           </div>
 
           <button
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-12 h-12 items-center justify-center hover:bg-white transition"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 bg-[var(--bg-card)] opacity-90 border border-[var(--border-color)] shadow rounded-full w-12 h-12 items-center justify-center hover:opacity-100 transition"
             onClick={handlePrev}
             aria-label="Previous events"
             disabled={loading || error}
@@ -184,7 +184,7 @@ const EventsSection = () => {
             <ChevronLeft />
           </button>
           <button
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-12 h-12 items-center justify-center hover:bg-white transition"
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 bg-[var(--bg-card)] opacity-90 border border-[var(--border-color)] shadow rounded-full w-12 h-12 items-center justify-center hover:opacity-100 transition"
             onClick={handleNext}
             aria-label="Next events"
             disabled={loading || error}
@@ -196,7 +196,7 @@ const EventsSection = () => {
           {Array.from({ length: pageCount }).map((_, idx) => (
             <button
               key={idx}
-              className={`mx-1 w-6 h-2 rounded-full transition-all duration-200 ${idx === activePage ? "bg-[var(--accent-color)]" : "bg-gray-300 hover:bg-[var(--accent-color)]/40"
+              className={`mx-1 w-6 h-2 rounded-full transition-all duration-200 ${idx === activePage ? "bg-[var(--accent-color)]" : "bg-[var(--border-color)] hover:bg-[var(--accent-color)]/40"
                 }`}
               onClick={() => setActivePage(idx)}
               aria-label={`Go to page ${idx + 1}`}
@@ -213,10 +213,10 @@ const EventsSection = () => {
             xmlns="http://www.w3.org/2000/svg"
             preserveAspectRatio="none"
           >
-            <path d="M0,70 C480,210 960,0 1440,140 L1440,140 L0,140 Z" fill="#e5e7eb" />
+            <path d="M0,70 C480,210 960,0 1440,140 L1440,140 L0,140 Z" fill="var(--bg-card)" />
           </svg>
         </div>
-        <div className="w-full bg-[#e5e7eb] rounded-b-2xl shadow-sm border-t border-[var(--border-color)] -mt-2 px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center text-sm text-[var(--text-muted)]">
+        <div className="w-full bg-[var(--bg-card)] rounded-b-2xl shadow-sm border-t border-[var(--border-color)] -mt-2 px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center text-sm text-[var(--text-muted)]">
           <span>
             {new Date().getFullYear()} <span className="font-semibold text-[var(--accent-color)]">QRserve</span>. All rights reserved.
           </span>

@@ -97,7 +97,10 @@ const AttendeeTickets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-left">
+    <div
+      className="min-h-screen text-left text-[var(--text-primary)]"
+      style={{ backgroundColor: "var(--bg-main)" }}
+    >
       <Header />
 
       <section className="pt-[96px] max-w-6xl mx-auto px-4 pb-12">
@@ -109,7 +112,7 @@ const AttendeeTickets = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"
+            className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-color)]"
           >
             <option value="all">All</option>
             <option value="valid">Valid</option>
@@ -119,14 +122,14 @@ const AttendeeTickets = () => {
         </div>
 
         {isLoading ? (
-          <p className="text-gray-500">Loading tickets…</p>
+          <p className="text-[var(--text-muted)]">Loading tickets…</p>
         ) : filteredTickets.length === 0 ? (
-          <p className="text-gray-500">No tickets found.</p>
+          <p className="text-[var(--text-muted)]">No tickets found.</p>
         ) : (
           <>
-            <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
+            <div className="overflow-x-auto border border-[var(--border-color)] rounded-xl shadow-sm bg-[var(--bg-card)]">
               <table className="min-w-full text-sm text-left">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[var(--bg-secondary)] border-b border-[var(--border-color)]">
                   <tr>
                     <th className="px-4 py-3">Event</th>
                     <th className="px-4 py-3">Start</th>
@@ -137,13 +140,13 @@ const AttendeeTickets = () => {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-[var(--border-color)]">
                   {paginatedTickets.map((ticket) => {
                     const event = ticket.event || {};
                     const status = ticket.status || "unknown";
 
                     return (
-                      <tr key={ticket.id} className="hover:bg-gray-50">
+                      <tr key={ticket.id} className="hover:bg-[var(--bg-secondary)]">
                         <td className="px-4 py-3 font-medium text-[var(--accent-color)] truncate">
                           {event.title_event || event.title || "Untitled Event"}
                         </td>
@@ -164,10 +167,10 @@ const AttendeeTickets = () => {
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-semibold capitalize
                               ${status === "valid"
-                                ? "bg-green-100 text-green-700"
+                                ? "bg-emerald-500/15 text-emerald-500"
                                 : status === "used"
-                                  ? "bg-gray-200 text-gray-700"
-                                  : "bg-red-100 text-red-700"
+                                  ? "bg-[var(--border-color)] text-[var(--text-primary)]"
+                                  : "bg-red-500/15 text-red-500"
                               }`}
                           >
                             {status}
@@ -178,7 +181,7 @@ const AttendeeTickets = () => {
                           className="px-4 py-3"
                         >
                           <button
-                            className="px-3 py-1 text-xs border rounded hover:bg-gray-100"
+                            className="px-3 py-1 text-xs border rounded hover:bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-primary)]"
                             onClick={() => setQrTicketId(ticket.id)}
                           >
                             View QR
@@ -192,7 +195,7 @@ const AttendeeTickets = () => {
             </div>
 
             <div className="flex justify-between items-center mt-4">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-[var(--text-muted)]">
                 Page {currentPage} of {totalPages}
               </span>
 
@@ -200,7 +203,7 @@ const AttendeeTickets = () => {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
-                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-50 border-[var(--border-color)] text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-secondary)]"
                 >
                   Prev
                 </button>
@@ -208,7 +211,7 @@ const AttendeeTickets = () => {
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => p + 1)}
-                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-50 border-[var(--border-color)] text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-secondary)]"
                 >
                   Next
                 </button>
@@ -220,9 +223,9 @@ const AttendeeTickets = () => {
 
       {qrTicketId && (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 px-4">
-          <div className="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+          <div className="relative w-full max-w-sm rounded-xl bg-[var(--bg-card)] p-6 shadow-xl border border-[var(--border-color)] text-[var(--text-primary)]">
             <button
-              className="absolute top-3 right-3 text-sm text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               onClick={() => setQrTicketId(null)}
             >
               Close
@@ -230,7 +233,7 @@ const AttendeeTickets = () => {
             <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Your Ticket QR</h3>
             <div className="flex flex-col items-center gap-3" ref={qrRef}>
               <QRCodeCanvas value={tickets.find((t) => t.id === qrTicketId)?.ticket_code || ""} size={200} includeMargin />
-              <p className="text-xs text-gray-500">Ticket code: {tickets.find((t) => t.id === qrTicketId)?.ticket_code}</p>
+              <p className="text-xs text-[var(--text-muted)]">Ticket code: {tickets.find((t) => t.id === qrTicketId)?.ticket_code}</p>
               <button
                 className="px-4 py-2 text-sm rounded bg-[var(--accent-color)] text-white font-semibold shadow hover:bg-[var(--accent-color)]/90"
                 onClick={handleDownloadQr}

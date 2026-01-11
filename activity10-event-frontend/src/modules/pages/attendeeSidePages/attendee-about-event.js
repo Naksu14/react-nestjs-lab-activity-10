@@ -201,11 +201,14 @@ const AboutEvent = () => {
 
     if (!normalized) {
         return (
-            <div className="min-h-screen bg-[var(--bg-main)] text-left">
+            <div
+                className="min-h-screen text-left text-[var(--text-primary)]"
+                style={{ backgroundColor: "var(--bg-main)" }}
+            >
                 <Header />
                 <section className="pt-[96px] max-w-5xl mx-auto px-4 flex flex-col items-start gap-4">
                     <h1 className="text-2xl font-bold text-[var(--accent-color)]">No event selected</h1>
-                    <p className="text-gray-600">Go back and pick an event from the landing page.</p>
+                    <p className="text-[var(--text-muted)]">Go back and pick an event from the landing page.</p>
                     <button
                         className="px-6 py-3 rounded bg-[var(--accent-color)] text-white font-semibold shadow hover:bg-[var(--accent-color)]/90 transition"
                         onClick={() => navigate(-1)}
@@ -218,7 +221,10 @@ const AboutEvent = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-left">
+        <div
+            className="min-h-screen text-left text-[var(--text-primary)]"
+            style={{ backgroundColor: "var(--bg-main)" }}
+        >
             <Header />
 
             <section className="pt-[96px] max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -237,7 +243,7 @@ const AboutEvent = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
                             <div className="absolute bottom-6 left-6 space-y-2">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-white text-black">
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-[var(--bg-card)]/90 text-[var(--text-primary)] border border-[var(--border-color)] shadow-sm">
                                         {normalized.statusLabel}
                                     </span>
                                 </div>
@@ -358,9 +364,9 @@ const AboutEvent = () => {
                                             Event Status
                                         </span>
                                         {timeLeft.kind === "completed" ? (
-                                            <span className="text-base font-semibold text-emerald-600">Completed</span>
+                                            <span className="text-base font-semibold text-emerald-400">Completed</span>
                                         ) : timeLeft.kind === "ongoing" ? (
-                                            <span className="text-base font-semibold text-blue-600">Ongoing</span>
+                                            <span className="text-base font-semibold text-blue-400">Ongoing</span>
                                         ) : timeLeft.kind === "upcoming" ? (
                                             <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                                                 Starts in {timeLeft.days}d · {timeLeft.hours}h · {timeLeft.minutes}m · {timeLeft.seconds}s
@@ -373,9 +379,9 @@ const AboutEvent = () => {
                                     </div>
                                     <span
                                         className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${timeLeft.kind === "completed"
-                                                ? "bg-emerald-100 text-emerald-700"
+                                                ? "bg-emerald-500/15 text-emerald-400"
                                                 : timeLeft.kind === "ongoing"
-                                                    ? "bg-blue-100 text-blue-700"
+                                                    ? "bg-blue-500/15 text-blue-400"
                                                     : "bg-[var(--accent-color)]/10 text-[var(--accent-color)]"
                                             }`}
                                     >
@@ -394,12 +400,12 @@ const AboutEvent = () => {
                         <div className="p-6 flex flex-col space-y-5 text-left">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {registrationCount !== undefined && !isCompletedStatus ? (
-                                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
+                                    <span className="text-xs bg-[var(--accent-color)]/10 text-[var(--accent-color)] px-2 py-1 rounded font-semibold">
                                         Registered: {registrationCount}
                                         {normalized.capacity ? ` / ${normalized.capacity}` : ""}
                                     </span>
                                 ) : null}
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
+                                <span className="text-xs bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded font-semibold">
                                     {normalized.statusLabel}
                                 </span>
                             </div>
@@ -466,10 +472,10 @@ const AboutEvent = () => {
 
                             <button
                                 className={`mt-1 w-full py-3 rounded-lg font-semibold text-base transition shadow ${alreadyRegistered
-                                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                        ? "bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed"
                                         : isRegisterEnabled
                                             ? "bg-[var(--accent-color)] hover:bg-[var(--accent-color)]/90 text-white"
-                                            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                            : "bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed"
                                     }`}
                                 disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
                                 aria-disabled={!isRegisterEnabled || registerMutation.isPending || alreadyRegistered}
@@ -484,21 +490,21 @@ const AboutEvent = () => {
                                             : "Registration unavailable"}
                             </button>
                             {registerSuccess ? (
-                                <p className="text-sm text-green-600 mt-2">{registerSuccess}</p>
+                                <p className="text-sm text-green-400 mt-2">{registerSuccess}</p>
                             ) : null}
                             {registerError ? (
-                                <p className="text-sm text-red-600 mt-2">{registerError}</p>
+                                <p className="text-sm text-red-400 mt-2">{registerError}</p>
                             ) : null}
                             <div className="mt-4 flex flex-wrap gap-3 justify-start">
                                 <button
-                                    className={`${showCancel ? "" : "w-full"} px-6 py-2 rounded bg-gray-200 text-[var(--accent-color)] font-semibold text-base shadow hover:bg-gray-300 transition`}
+                                    className={`${showCancel ? "" : "w-full"} px-6 py-2 rounded bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] font-semibold text-base shadow hover:bg-[var(--bg-card)] transition`}
                                     onClick={() => navigate(-1)}
                                 >
                                     Return to Events
                                 </button>
                                 {showCancel ? (
                                     <button
-                                        className="px-6 py-2 rounded bg-red-100 text-red-700 font-semibold text-base shadow hover:bg-red-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="px-6 py-2 rounded bg-red-500/15 text-red-400 font-semibold text-base shadow hover:bg-red-500/25 transition disabled:opacity-60 disabled:cursor-not-allowed"
                                         onClick={handleCancel}
                                         disabled={cancelling || !isEmailPending}
                                         title={isEmailPending ? "" : "Cancellation disabled after ticket email is processed"}
@@ -508,11 +514,11 @@ const AboutEvent = () => {
                                 ) : null}
                             </div>
                             {showCancel && !isEmailPending ? (
-                                <p className="text-xs text-gray-500">Cancellation is only available before the ticket email is processed.</p>
+                                <p className="text-xs text-[var(--text-muted)]">Cancellation is only available before the ticket email is processed.</p>
                             ) : null}
                         </div>
                     </div>
-                    <p className="text-sm text-gray-400 mt-4 text-center">
+                    <p className="text-sm text-[var(--text-muted)] mt-4 text-center">
                         Hosted by <span className="font-semibold text-[var(--accent-color)]">{normalized.host}</span>
                     </p>
                 </div>

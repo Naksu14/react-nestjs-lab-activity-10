@@ -22,6 +22,10 @@
   --text-muted: #656d76;
   --accent-color: #7c3aed;
   --table-body: #fcfcfc;
+  --hero-overlay: rgba(0, 0, 0, 0.25);
+  --hero-wave: #ffffff;
+  --hero-title: #ffffff;
+  --hero-subtitle: rgba(255, 255, 255, 0.9);
 }
 
 [data-theme="dark"] {
@@ -42,8 +46,12 @@
   --status-checked-dot: #34d399;
   --text-primary: #e6edf3;
   --text-muted: #848d97;
-  --accent-color: #a78bfa;
+  --accent-color: #8e70e7;
   --table-body: #1c2127;
+  --hero-overlay: rgba(0, 0, 0, 0.6);
+  --hero-wave: var(--bg-main);
+  --hero-title: #ffffff;
+  --hero-subtitle: rgba(255, 255, 255, 0.8);
 }
 
 /* Custom scrollbar styling for elements using the `custom-scrollbar` class */

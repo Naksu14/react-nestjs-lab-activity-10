@@ -21,7 +21,13 @@ const EventLandingPage = () => {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[var(--text-primary)] pb-12">
+    <div
+      className="min-h-screen flex flex-col pb-12"
+      style={{
+        backgroundColor: "var(--bg-main)",
+        color: "var(--text-primary)",
+      }}
+    >
       <Header />
 
       <div className="pt-[96px] mt-4">
@@ -42,10 +48,17 @@ const EventLandingPage = () => {
 
           <button
             onClick={() => navigate("/login")}
-            className="flex items-center gap-2 text-[var(--accent-color)] mt-2 font-bold hover:underline group"
+            className="flex items-center gap-2 mt-2 font-bold hover:underline group"
+            style={{ color: "var(--accent-color)" }}
           >
             PROCEED TO LOGIN
-            <span className="inline-flex items-center ml-4 justify-center w-8 h-8 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)] group-hover:bg-[var(--accent-color)]/20 transition-colors">
+            <span
+              className="inline-flex items-center ml-4 justify-center w-8 h-8 rounded-full border opacity-10 group-hover:opacity-20 transition-opacity"
+              style={{
+                backgroundColor: "var(--accent-color)",
+                borderColor: "var(--accent-color)",
+              }}
+            >
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -64,7 +77,7 @@ const EventLandingPage = () => {
         </section>
 
         {/* EVENTS */}
-        <section id="events">
+        <section id="events" className="w-[95%] max-w-6xl mx-auto mt-10 px-4">
           <EventsSection />
         </section>
       </div>

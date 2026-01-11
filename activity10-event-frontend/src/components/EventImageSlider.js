@@ -30,17 +30,51 @@ const EventImageSlider = () => {
           draggable={false}
         />
       ))}
-      <div className="absolute inset-0 bg-black/25 z-20" />
-      <div className="absolute inset-0 z-30 flex flex-col items-start justify-center px-8 md:px-16" style={{ marginLeft: '10%' }}>
-        <h1 className="text-white text-3xl md:text-5xl mb-2 text-left">
+      <div
+        className="absolute inset-0 z-20"
+        style={{ backgroundColor: "var(--hero-overlay)" }}
+      />
+      <div
+        className="absolute inset-0 z-30 flex flex-col items-start justify-center px-8 md:px-16"
+        style={{ marginLeft: "10%", color: "var(--hero-title)" }}
+      >
+        <h1 className="text-3xl md:text-5xl mb-2 text-left">
           <span className="font-bold" style={{ color: '#7c3aed' }}>Be a Guest</span> <span className="font-normal">on Amazing Events</span>
         </h1>
-        <p className="text-white text-base md:text-lg mb-6 max-w-xl text-left" style={{textShadow: '0 2px 8px rgba(0,0,0,0.1)'}}>Register and reserve tickets for your favorite events. Discover, join, and never miss out on the best happenings around you. Simple, fast, and free for everyone!</p>
+        <p
+          className="text-base md:text-lg mb-6 max-w-xl text-left"
+          style={{
+            color: "var(--hero-subtitle)",
+            textShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          Register and reserve tickets for your favorite events. Discover, join, and
+          never miss out on the best happenings around you. Simple, fast, and free for
+          everyone!
+        </p>
         <div className="flex gap-4">
-          <button className="px-6 py-2 rounded bg-[var(--accent-color)] text-white font-semibold text-lg shadow hover:bg-[var(--accent-color)]/90 transition-colors" onClick={() => navigate('/signup')}>Get started</button>
-          <button className="px-6 py-2 rounded bg-white text-[var(--accent-color)] font-semibold text-lg shadow hover:bg-gray-100 transition-colors"
-          onClick={() => navigate('/login')}
-          >Sign in</button>
+          <button
+            className="px-6 py-2 rounded text-lg font-semibold shadow transition-colors"
+            style={{
+              backgroundColor: "var(--accent-color)",
+              color: "#fff",
+              border: "1px solid transparent",
+            }}
+            onClick={() => navigate("/signup")}
+          >
+            Get started
+          </button>
+          <button
+            className="px-6 py-2 rounded text-lg font-semibold shadow transition-colors border hover:opacity-90"
+            style={{
+              backgroundColor: "var(--bg-card)",
+              borderColor: "var(--border-color)",
+              color: "var(--text-primary)",
+            }}
+            onClick={() => navigate("/login")}
+          >
+            Sign in
+          </button>
         </div>
       </div>
       <svg
@@ -52,7 +86,7 @@ const EventImageSlider = () => {
       >
         <path
           d="M0,40 C360,120 1080,0 1440,80 L1440,120 L0,120 Z"
-          fill="#fff"
+          fill="var(--hero-wave)"
         />
       </svg>
     </div>

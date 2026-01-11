@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import eventLogo from "../assets/icons/event-logo.png";
@@ -7,6 +7,7 @@ import { IoTicketOutline } from "react-icons/io5";
 import { getCurrentUser, updateUser } from "../services/authService";
 import { LuChevronDown } from "react-icons/lu";
 import { FaUser } from "react-icons/fa6";
+import { Moon, Sun } from "lucide-react";
 import LogoutModal from "./modal/logoutModal";
 import EditProfileModal from "./modal/EditProfileModal";
 
@@ -30,6 +31,10 @@ const navLinks = [
 
 const Header = ({ children }) => {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("theme") === "dark";
+  });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -69,6 +74,18 @@ const Header = ({ children }) => {
     }
     return Promise.resolve();
   };
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
+
+  const themeLabel = isDarkMode ? "Switch to light mode" : "Switch to dark mode";
 
   return (
     <>
@@ -118,6 +135,20 @@ const Header = ({ children }) => {
           </nav>
 
           <div className="hidden md:flex items-center gap-3 relative">
+            <button
+              type="button"
+              onClick={() => setIsDarkMode((prev) => !prev)}
+              className="w-10 h-10 rounded-full border flex items-center justify-center"
+              aria-label={themeLabel}
+              title={themeLabel}
+              style={{
+                borderColor: "var(--border-color)",
+                backgroundColor: "var(--bg-card)",
+                color: "var(--text-primary)",
+              }}
+            >
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <div className="flex flex-col text-right leading-tight">
               <span className="text-sm font-semibold text-[var(--text-primary)]">{profile.name}</span>
               <span className="text-[12px] text-[var(--text-muted)]">QRserve</span>

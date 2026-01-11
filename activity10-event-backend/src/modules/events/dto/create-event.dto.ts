@@ -6,6 +6,7 @@ import {
   IsDateString,
   Min,
   IsOptional,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { EventStatus } from '../entities/event.entity';
@@ -51,4 +52,9 @@ export class CreateEventDto {
   @ApiProperty({ example: 1 })
   @IsNumber()
   organizer_id: number;
+
+  @ApiProperty({ example: false, required: false, default: false })
+  @IsBoolean()
+  @IsOptional()
+  created_by_admin?: boolean;
 }

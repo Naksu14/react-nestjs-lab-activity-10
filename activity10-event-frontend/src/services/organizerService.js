@@ -38,6 +38,7 @@ export const getAllEventsByOrganizer = async () => {
       Authorization: `Bearer ${token}`,
     },
   });
+  // Include admin-created events for this organizer
   return data;
 };
 

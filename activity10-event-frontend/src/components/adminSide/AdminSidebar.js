@@ -1,39 +1,13 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import LogoutModal from "../modal/logoutModal";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleLogout = () => {
-    // Add your logout logic here
-    navigate('/login');
-  };
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   const menuItems = [
-    {
-      group: "General",
-      items: [
-        {
-          name: "Dashboard",
-          icon: (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-            </svg>
-          ),
-          path: "/admin/dashboard",
-        },
-        {
-          name: "My Events",
-          icon: (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
-          ),
-          path: "/admin/my-events",
-        },
-      ],
-    },
     {
       group: "Management",
       items: [
@@ -44,16 +18,7 @@ const AdminSidebar = () => {
               <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
             </svg>
           ),
-          path: "/admin/event-management",
-        },
-        {
-          name: "Organizer Monitoring",
-          icon: (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-            </svg>
-          ),
-          path: "/admin/organizers",
+          path: "/admin/events-management",
         },
         {
           name: "User Management",
@@ -63,6 +28,15 @@ const AdminSidebar = () => {
             </svg>
           ),
           path: "/admin/user-management",
+        },
+        {
+          name: "My Tickets",
+          icon: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z" />
+            </svg>
+          ),
+          path: "/admin/my-tickets",
         },
       ],
     },
@@ -84,7 +58,7 @@ const AdminSidebar = () => {
 
   return (
     <aside
-      className="sidebar w-64 h-[calc(100vh-0.5rem)] flex flex-col text-left border m-1 rounded-lg transition-colors duration-300"
+      className="sidebar sticky top-1 w-64 h-[calc(100vh-0.5rem)] flex flex-col text-left border m-1 rounded-lg transition-colors duration-300"
       style={{
         backgroundColor: "var(--bg-card)",
         color: "var(--text-primary)",
@@ -122,7 +96,7 @@ const AdminSidebar = () => {
                         e.preventDefault();
                         navigate(item.path);
                       }}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all group ${
+                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all group cursor-pointer ${
                         isActive ? "active" : ""
                       }`}
                     >
@@ -145,7 +119,7 @@ const AdminSidebar = () => {
         style={{ borderColor: "var(--border-color)" }}
       >
         <button 
-          onClick={handleLogout}
+          onClick={() => setIsLogoutModalOpen(true)}
           className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-500 rounded-xl hover:bg-red-50 transition-colors"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -154,6 +128,10 @@ const AdminSidebar = () => {
           <span className="ml-3">Logout</span>
         </button>
       </div>
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
     </aside>
   );
 };

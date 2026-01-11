@@ -18,3 +18,9 @@ export const getPublishedAndCompletedEvents = async () => {
     return status === "published" || status === "completed";
   });
 };
+
+// Admin/all-users: fetch all events without status filtering
+export const getAllEvents = async () => {
+  const { data } = await api.get("/events");
+  return Array.isArray(data) ? data : [];
+};

@@ -4,6 +4,23 @@ const AdminTopNav = () => {
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("theme") === "dark"
   );
+  const [userRole, setUserRole] = useState(null);
+  const [userName, setUserName] = useState(null);
+
+  useEffect(() => {
+    // Extract role from JWT token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        const payloadJson = atob(payloadBase64);
+        const payload = JSON.parse(payloadJson);
+        setUserRole(payload.role);
+      } catch (error) {
+        console.error("Failed to decode JWT:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -14,6 +31,10 @@ const AdminTopNav = () => {
       localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
+
+  const displayName = userRole === 'admin' ? 'Admin' : 'User Name';
+  const displayRole = userRole === 'admin' ? 'Admin Account' : 'Organizer Account';
+  const initials = userRole === 'admin' ? 'AD' : 'OP';
 
   return (
     <header
@@ -45,11 +66,11 @@ const AdminTopNav = () => {
 
         <button className="flex items-center space-x-3 group">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold leading-tight">User Name</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Organizer Account</p>
+            <p className="text-xs font-bold leading-tight">{displayName}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{displayRole}</p>
           </div>
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-200 dark:shadow-none">
-            OP
+            {initials}
           </div>
         </button>
       </div>

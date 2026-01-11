@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { createEvent } from "../../services/organizerService";
 import { getCurrentUser } from "../../services/authService";
+import { usersService } from "../../services/adminSideService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
+const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId, isAdminCreating = false }) => {
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
     end_datetime: "",
     capacity: "",
     status: "draft",
+    organizer_id: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -32,6 +34,12 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: () => getCurrentUser(),
+  });
+
+  const { data: organizers = [] } = useQuery({
+    queryKey: ["allOrganizers"],
+    queryFn: () => usersService.getAllOrganizers(),
+    enabled: isAdminCreating,
   });
 
   const statusOptions = [
@@ -83,6 +91,8 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
     if (!formData.end_datetime) newErrors.end_datetime = "End date is required";
     if (!formData.capacity || formData.capacity < 1)
       newErrors.capacity = "Capacity must be at least 1";
+    if (isAdminCreating && !formData.organizer_id)
+      newErrors.organizer_id = "Organizer is required";
     if (
       formData.start_datetime &&
       formData.end_datetime &&
@@ -101,13 +111,14 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
     const payload = {
       ...formData,
       capacity: parseInt(formData.capacity),
-      organizer_id: currentUser?.id,
+      organizer_id: isAdminCreating ? parseInt(formData.organizer_id) : currentUser?.id,
+      created_by_admin: isAdminCreating ? true : false,
       image: imageFile,
     };
     try {
       await createEvent(payload);
-
       queryClient.invalidateQueries(["organizerEvents"]);
+      queryClient.invalidateQueries(["adminEvents"]);
     } catch (error) {
       console.error("Error creating event:", error);
     }
@@ -123,6 +134,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
       end_datetime: "",
       capacity: "",
       status: "draft",
+      organizer_id: "",
     });
     setImageFile(null);
     setImagePreview(null);
@@ -413,6 +425,37 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, organizerId }) => {
                   </select>
                 </div>
               </div>
+
+              {/* Admin: Assign Organizer */}
+              {isAdminCreating && (
+                <div>
+                  <label
+                    className="flex items-center gap-2 text-sm font-medium mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    <Users size={16} /> Assign Organizer
+                  </label>
+                  <select
+                    name="organizer_id"
+                    value={formData.organizer_id}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                    style={inputStyle}
+                  >
+                    <option value="">Select an organizer...</option>
+                    {organizers.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.firstname} {org.lastname} ({org.email})
+                      </option>
+                    ))}
+                  </select>
+                  {errors.organizer_id && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.organizer_id}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </form>

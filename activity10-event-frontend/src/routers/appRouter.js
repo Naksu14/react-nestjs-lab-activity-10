@@ -3,8 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "../modules/auth/login";
 import Signup from "../modules/auth/signup";
 import ForgotPassword from "../modules/auth/forgotpassword";
-import AuthGuard from "../components/auth/AuthGuard";
-import GuestGuard from "../components/auth/GuestGuard";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
 import EventLandingPage from "../modules/pages/attendeeSidePages/event-landing-page";
 
 import EventOrganizerPage from "../modules/pages/organizerSidePages/event-organizer-page";
@@ -19,32 +18,96 @@ import OrganizerPage from "../modules/pages/adminSidePages/event-OrganizerPage";
 
 import EventAdminSidePage from "../modules/pages/adminSidePages/event-adminSide-page";
 import EventReportsPage from "../modules/pages/adminSidePages/event-reports-page";
+import AdminTicketsPage from "../modules/pages/adminSidePages/admin-tickets-page";
 
 const AppRouter = () => {
   return (
     <Router>
       <Routes>
-        {/* Only accessible if NOT logged in */}
+        {/* Public Routes - Anyone can access */}
+        <Route path="/" element={<EventLandingPage />} />
+        <Route path="/landing" element={<EventLandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* Public landing page as main page */}
-        <Route path="/" element={<EventLandingPage />} />
-        <Route path="/landing" element={<EventLandingPage />} />
         <Route path="/events" element={<AboutEvent />} />
         <Route path="/tickets" element={<AttendeeTickets />} />
 
-        {/* Protected Routes (Only accessible if logged in) */}
-        <Route path="/organizer" element={<EventOrganizerPage />} />
-        <Route path="/organizer/myevents" element={<MyEvent />} />
-        <Route path="/organizer/attendees" element={<Attendees />} />
-        <Route path="/organizer/scanner" element={<QrScanner />} />
-        <Route path="/organizer/announcements" element={<Announcements />} />
+        {/* Protected Admin Routes - Only admins */}
+        <Route
+          path="/admin/events-management"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EventAdminSidePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/user-management"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <OrganizerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EventReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/my-tickets"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminTicketsPage />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/admin" element={<EventAdminSidePage />} />
-        <Route path="/admin/user-management" element={<OrganizerPage />} />
-        <Route path="/admin/reports" element={<EventReportsPage />} />
+        {/* Protected Organizer Routes - Only organizers */}
+        <Route
+          path="/organizer"
+          element={
+            <ProtectedRoute allowedRoles={["organizer"]}>
+              <EventOrganizerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/myevents"
+          element={
+            <ProtectedRoute allowedRoles={["organizer"]}>
+              <MyEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/attendees"
+          element={
+            <ProtectedRoute allowedRoles={["organizer"]}>
+              <Attendees />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/scanner"
+          element={
+            <ProtectedRoute allowedRoles={["organizer"]}>
+              <QrScanner />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["organizer"]}>
+              <Announcements />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

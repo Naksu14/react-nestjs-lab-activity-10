@@ -9,17 +9,54 @@ import {
   Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAnnouncementsByEvent,
   getRegistrationsByEventId,
 } from "../../services/organizerService";
+import { registerForEvent, getUserRegistrationForEvent } from "../../services/attendeesService";
+import { getCurrentUser } from "../../services/authService";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-const ViewEvent = ({ event, onBack }) => {
+const ViewEvent = ({ event, onBack, isAdminView = false }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [attendeeSearch, setAttendeeSearch] = useState("");
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => getCurrentUser(),
+    enabled: isAdminView,
+  });
+
+  const { data: userRegistration, refetch: refetchRegistration } = useQuery({
+    queryKey: ["userRegistration", event?.id, currentUser?.id],
+    queryFn: () => getUserRegistrationForEvent(event.id, currentUser.id),
+    enabled: isAdminView && !!event?.id && !!currentUser?.id,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: registerForEvent,
+    onSuccess: () => {
+      setRegisterSuccess(true);
+      refetchRegistration();
+      queryClient.invalidateQueries(["eventRegistrations", event?.id]);
+      setTimeout(() => setRegisterSuccess(false), 3000);
+    },
+    onError: (error) => {
+      alert(error.message || "Failed to register for event");
+    },
+  });
+
+  const handleRegister = async () => {
+    if (!currentUser?.id || !event?.id) {
+      alert("Unable to register. Please try again.");
+      return;
+    }
+    registerMutation.mutate({ eventId: event.id, userId: currentUser.id });
+  };
 
   const { data: announcements, isLoading: isAnnouncementsLoading } = useQuery({
     queryKey: ["eventAnnouncements", event?.id],
@@ -396,7 +433,7 @@ const ViewEvent = ({ event, onBack }) => {
                     className="text-[10px] uppercase font-bold"
                     style={{ color: "var(--text-muted)" }}
                   >
-                    Organizer
+                    {event.created_by_admin ? "Event Created By Admin" : "Organizer"}
                   </p>
                   <p
                     className="text-sm font-medium"
@@ -471,12 +508,36 @@ const ViewEvent = ({ event, onBack }) => {
             </div>
 
             {/* Quick Action Button */}
-            <button
-              className="w-full mt-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
-              onClick={() => navigate(`/organizer/scanner`)}
-            >
-              Manage Registrations
-            </button>
+            {isAdminView ? (
+              <button
+                className={`w-full mt-8 py-3 rounded-xl font-bold transition-all shadow-lg ${
+                  userRegistration
+                    ? "bg-green-600 text-white shadow-green-600/20 cursor-not-allowed opacity-90"
+                    : registerSuccess
+                    ? "bg-green-600 text-white shadow-green-600/20 cursor-not-allowed"
+                    : registerMutation.isPending
+                    ? "bg-indigo-600 text-white shadow-indigo-600/20 cursor-wait opacity-90"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20 active:scale-95 cursor-pointer"
+                }`}
+                onClick={handleRegister}
+                disabled={!!userRegistration || registerMutation.isPending || registerSuccess}
+              >
+                {registerMutation.isPending
+                  ? "Registering..."
+                  : userRegistration
+                  ? "Already Registered"
+                  : registerSuccess
+                  ? "✓ Registered Successfully!"
+                  : "Register for this Event"}
+              </button>
+            ) : (
+              <button
+                className="w-full mt-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all active:scale-95 shadow-lg shadow-indigo-600/20"
+                onClick={() => navigate(`/organizer/scanner`)}
+              >
+                Manage Registrations
+              </button>
+            )}
           </div>
         </div>
       </div>

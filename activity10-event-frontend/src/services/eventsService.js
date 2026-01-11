@@ -19,6 +19,12 @@ export const getPublishedAndCompletedEvents = async () => {
   });
 };
 
+// Admin/all-users: fetch all events without status filtering
+export const getAllEvents = async () => {
+  const { data } = await api.get("/events");
+  return Array.isArray(data) ? data : [];
+};
+
 export const findticketByCode = async (ticketCode) => {
   const token = localStorage.getItem("authToken");
   const { data } = await api.get(`/event-tickets/ticket-code/${ticketCode}`, {

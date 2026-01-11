@@ -1,48 +1,11 @@
 import React from 'react';
-import { Copy, RefreshCw, MoreVertical } from 'lucide-react';
+import { Users, Download } from 'lucide-react';
 
-function ReportsTable() {
-  const events = [
-    { name: 'Tech Conference 2024', organizer: 'Sarah Johnson', registrations: 263, checkedIn: 997, noShows: 822, date: 'Apr 15, 2024' },
-    { name: 'Startup Expo 2024', organizer: 'Emily Carter', registrations: 2221, checkedIn: 225, noShows: 3251, date: 'Apr 19, 2024' },
-    { name: 'Charity Gala', organizer: 'Emily Carter', registrations: 213, checkedIn: 232, noShows: 527, date: 'Apr 15, 2024' },
-    { name: 'Music Festival 2024', organizer: 'Sophia Lee', registrations: 249, checkedIn: 268, noShows: 1473, date: 'Apr 19, 2024' },
-    { name: 'Health & Wellness Summit', organizer: 'Sophia', registrations: 292, checkedIn: 263, noShows: 1042, date: 'Apr 15, 2024' },
-    { name: 'Art & Food Fair', organizer: 'Laura Wilson', registrations: 553, checkedIn: 444, noShows: 1625, date: 'Apr 19, 2024' },
-    { name: 'Networking Night', organizer: 'James Miller', registrations: 646, checkedIn: 222, noShows: 7211, date: 'Apr 15, 2024' },
-    { name: 'Web Dev Workshop', organizer: 'Daniel Martinez', registrations: 560, checkedIn: 237, noShows: 1288, date: 'May 20, 2024' }
-  ];
+function ReportsTable({ rows = [], onViewAttendees = () => {}, onExport = () => {} }) {
+  const events = rows;
 
   return (
     <div className="border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] overflow-hidden">
-      {/* Search Bar */}
-      <div className="p-4 border-b border-[var(--border-color)]">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-[var(--text-muted)]">Event:</label>
-          <select className="px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] cursor-pointer">
-            <option>All Events</option>
-          </select>
-          <select className="px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] cursor-pointer">
-            <option>All Organizers</option>
-          </select>
-          <div className="relative flex-1">
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search Event..."
-              className="pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] w-full"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -112,17 +75,19 @@ function ReportsTable() {
                 <td className="px-4 py-3 text-sm text-[var(--text-muted)]">{event.date}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors" title="Active">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <button
+                      onClick={() => onViewAttendees(event.id)}
+                      className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors"
+                      title="View Attendees"
+                    >
+                      <Users size={16} className="text-[var(--text-muted)]" />
                     </button>
-                    <button className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors" title="Copy">
-                      <Copy size={14} className="text-[var(--text-muted)]" />
-                    </button>
-                    <button className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors" title="Refresh">
-                      <RefreshCw size={14} className="text-[var(--text-muted)]" />
-                    </button>
-                    <button className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors" title="More">
-                      <MoreVertical size={14} className="text-[var(--text-muted)]" />
+                    <button
+                      onClick={() => onExport(event.id)}
+                      className="p-1.5 hover:bg-[var(--bg-main)] rounded transition-colors"
+                      title="Export to Excel"
+                    >
+                      <Download size={16} className="text-[var(--text-muted)]" />
                     </button>
                   </div>
                 </td>

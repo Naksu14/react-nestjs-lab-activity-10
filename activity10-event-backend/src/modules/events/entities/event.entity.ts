@@ -53,6 +53,9 @@ export class Event {
   @JoinColumn({ name: 'organizer_id' })
   organizer: EventUser;
 
+  @Column({ default: false })
+  created_by_admin: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

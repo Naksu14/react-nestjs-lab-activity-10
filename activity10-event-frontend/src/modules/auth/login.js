@@ -1,12 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../services/authService";
+import { AuthContext } from "../../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, userRole } = useContext(AuthContext);
+  const { login: contextLogin } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      if (userRole === "admin") {
+        navigate("/admin/events-management", { replace: true });
+      } else if (userRole === "organizer") {
+        navigate("/organizer", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [isAuthenticated, userRole, navigate]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -14,11 +30,10 @@ const Login = () => {
     login({ email, password })
       .then(({ accessToken, role }) => {
         if (accessToken) {
-          localStorage.setItem("authToken", accessToken);
+          contextLogin(accessToken, role);
         }
-        localStorage.setItem("userRole", role);
         if (role === "admin") {
-          navigate("/admin");
+          navigate("/admin/events-management");
         } else if (role === "organizer") {
           navigate("/organizer");
         } else {

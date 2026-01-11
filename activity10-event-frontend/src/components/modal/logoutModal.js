@@ -1,16 +1,17 @@
-import React from "react";
+import React, { useContext } from "react";
 import ReactDOM from "react-dom";
 import { LogOut} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const LogoutModal = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userRole");
+    logout();
     onClose();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   if (!isOpen) return null;

@@ -6,6 +6,8 @@ import fallbackImage from "../../../assets/images/sample-event-1.jpg";
 import { getCurrentUser } from "../../../services/authService";
 import { registerForEvent, getRegistrationCount, getUserRegistrationForEvent, cancelRegistration } from "../../../services/attendeesService";
 import { MapPin, Clock, Users } from "lucide-react";
+import { useQuery as useAnnouncementsQuery } from "@tanstack/react-query";
+import { getAnnouncementsByEvent } from "../../../services/organizerService";
 
 const formatDateRange = (startDate, endDate) => {
     if (!startDate && !endDate) return "Date to be announced";
@@ -74,11 +76,30 @@ const AboutEvent = () => {
         enabled: Boolean(normalized?.id),
     });
 
+    const { data: announcements, isLoading: isAnnouncementsLoading } = useAnnouncementsQuery({
+        queryKey: ["event-announcements", normalized?.id],
+        queryFn: () => getAnnouncementsByEvent(normalized.id),
+        enabled: Boolean(normalized?.id),
+    });
+
     const { data: userRegistration } = useQuery({
         queryKey: ["user-registration", normalized?.id, currentUser?.id],
         queryFn: () => getUserRegistrationForEvent(normalized.id, currentUser.id),
         enabled: Boolean(normalized?.id && currentUser?.id),
+        refetchInterval: (data) => ((data?.email_status || "").toLowerCase() === "pending" ? 5000 : false),
+        refetchOnWindowFocus: (data) => ((data?.email_status || "").toLowerCase() === "pending"),
     });
+
+    useEffect(() => {
+        const isPending = (userRegistration?.email_status || "").toLowerCase() === "pending";
+        if (!isPending || !normalized?.id || !currentUser?.id) return;
+
+        const timer = setInterval(() => {
+            queryClient.invalidateQueries({ queryKey: ["user-registration", normalized.id, currentUser.id] });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [userRegistration?.email_status, userRegistration?.id, normalized?.id, currentUser?.id, queryClient]);
 
     const isCompletedStatus = (normalized?.status || normalized?.statusLabel || "").toLowerCase().includes("completed");
 
@@ -125,6 +146,7 @@ const AboutEvent = () => {
     const isRegisterEnabled = normalized?.status === "published" && !isCompletedStatus;
 
     const alreadyRegistered = (userRegistration?.registration_status || "").toLowerCase() === "registered";
+    const isEmailPending = (userRegistration?.email_status || "").toLowerCase() === "pending";
     const showCancel = alreadyRegistered;
 
     const registerMutation = useMutation({
@@ -134,7 +156,7 @@ const AboutEvent = () => {
             queryClient.invalidateQueries({ queryKey: ["user-registration", normalized?.id, currentUser?.id] });
             queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
             queryClient.invalidateQueries({ queryKey: ["registrations-all"] });
-            setRegisterSuccess("You're registered! Check your email for the ticket.");
+            setRegisterSuccess("You're registered! Your ticket email will arrive shortly.");
         },
         onError: (err) => {
             setRegisterError(err?.message || "Registration failed. Please try again.");
@@ -218,12 +240,6 @@ const AboutEvent = () => {
                                     <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-white text-black">
                                         {normalized.statusLabel}
                                     </span>
-                                    {registrationCount !== undefined && !isCompletedStatus ? (
-                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-[var(--accent-color)] text-white">
-                                            Registered: {registrationCount}
-                                            {normalized.capacity ? ` / ${normalized.capacity}` : ""}
-                                        </span>
-                                    ) : null}
                                 </div>
                                 <h1 className="text-3xl font-bold text-white leading-tight drop-shadow">
                                     {normalized.title}
@@ -419,19 +435,89 @@ const AboutEvent = () => {
                                 </button>
                                 {showCancel ? (
                                     <button
-                                        className="px-6 py-2 rounded bg-red-100 text-red-700 font-semibold text-base shadow hover:bg-red-200 transition disabled:opacity-60"
+                                        className="px-6 py-2 rounded bg-red-100 text-red-700 font-semibold text-base shadow hover:bg-red-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
                                         onClick={handleCancel}
-                                        disabled={cancelling}
+                                        disabled={cancelling || !isEmailPending}
+                                        title={isEmailPending ? "" : "Cancellation disabled after ticket email is processed"}
                                     >
-                                        {cancelling ? "Cancelling..." : "Cancel"}
+                                        {cancelling ? "Cancelling..." : isEmailPending ? "Cancel" : "Cancel disabled"}
                                     </button>
                                 ) : null}
                             </div>
+                            {showCancel && !isEmailPending ? (
+                                <p className="text-xs text-gray-500">Cancellation is only available before the ticket email is processed.</p>
+                            ) : null}
                         </div>
                     </div>
                     <p className="text-sm text-gray-400 mt-4 text-center">
                         Hosted by <span className="font-semibold text-[var(--accent-color)]">{normalized.host}</span>
                     </p>
+                </div>
+            </section>
+
+            <section className="max-w-7xl mx-auto px-4 mt-4">
+                <div
+                    className="rounded-lg border p-6 shadow-sm"
+                    style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-color)" }}
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <h2
+                            className="text-sm font-bold uppercase tracking-wider"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            Event Updates
+                        </h2>
+                    </div>
+
+                    {isAnnouncementsLoading ? (
+                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                            Loading updates...
+                        </p>
+                    ) : !announcements || announcements.length === 0 ? (
+                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                            No announcements for this event yet.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {announcements.map((a) => (
+                                <div
+                                    key={a.id}
+                                    className="p-4 rounded-lg"
+                                    style={{
+                                        backgroundColor: "var(--bg-secondary)",
+                                        border: "1px solid var(--border-color)",
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3
+                                            className="text-sm font-semibold"
+                                            style={{ color: "var(--text-primary)" }}
+                                        >
+                                            {a.title}
+                                        </h3>
+                                        <span
+                                            className="text-[11px]"
+                                            style={{ color: "var(--text-muted)" }}
+                                        >
+                                            {new Date(a.sent_at).toLocaleString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                                hour: "numeric",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
+                                    </div>
+                                    <p
+                                        className="text-xs"
+                                        style={{ color: "var(--text-muted)" }}
+                                    >
+                                        {a.message}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
         </div>

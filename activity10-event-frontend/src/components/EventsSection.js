@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FaExternalLinkAlt, FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
@@ -44,11 +44,29 @@ const EventsSection = () => {
     [events, activeFilter]
   );
 
-  const pageCount = Math.max(1, Math.ceil(filteredEvents.length / cardsPerPage));
-  const pagedEvents = filteredEvents.slice(
-    activePage * cardsPerPage,
-    activePage * cardsPerPage + cardsPerPage
-  );
+  const pages = useMemo(() => {
+    const chunks = [];
+    for (let i = 0; i < filteredEvents.length; i += cardsPerPage) {
+      chunks.push(filteredEvents.slice(i, i + cardsPerPage));
+    }
+    return chunks.length ? chunks : [[]];
+  }, [filteredEvents]);
+
+  const pageCount = pages.length;
+  const currentPage = Math.min(activePage, pageCount - 1);
+  const pagedEvents = pages[currentPage];
+
+  useEffect(() => {
+    setActivePage(0);
+  }, [activeFilter, filteredEvents.length]);
+
+  const handlePrev = () => {
+    setActivePage((prev) => (prev - 1 + pageCount) % pageCount);
+  };
+
+  const handleNext = () => {
+    setActivePage((prev) => (prev + 1) % pageCount);
+  };
 
   const formatDateTime = (date) => {
     if (!date) return "Date to be announced";
@@ -83,62 +101,95 @@ const EventsSection = () => {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-          {loading ? (
-            <div className="col-span-full text-center text-gray-500 py-12">Loading events…</div>
-          ) : error ? (
-            <div className="col-span-full text-center text-red-500 py-12">{error}</div>
-          ) : pagedEvents.length === 0 ? (
-            <div className="col-span-full text-center text-gray-400 py-12">No events found.</div>
-          ) : (
-            pagedEvents.map((event) => (
+        <div className="relative w-full overflow-hidden">
+          <div
+            className="flex transition-transform duration-500"
+            style={{
+              transform: `translateX(-${pageCount ? (currentPage * (100 / pageCount)) : 0}%)`,
+              width: `${pageCount * 100}%`,
+            }}
+          >
+            {pages.map((page, pageIdx) => (
               <div
-                key={event.id}
-                className="group bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden transition-transform hover:scale-[1.02] border border-gray-100 relative"
+                key={pageIdx}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full shrink-0"
+                style={{ width: `${100 / pageCount}%` }}
               >
-                <img
-                  src={getImage(event)}
-                  alt={event.title}
-                  className="w-full h-40 object-cover object-center"
-                  draggable={false}
-                />
-                <div className="flex-1 flex flex-col p-4 gap-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg md:text-xl font-bold text-[var(--accent-color)] truncate">
-                      {event.title}
-                    </h3>
+                {loading ? (
+                  <div className="col-span-full text-center text-gray-500 py-12">Loading events…</div>
+                ) : error ? (
+                  <div className="col-span-full text-center text-red-500 py-12">{error}</div>
+                ) : page.length === 0 ? (
+                  <div className="col-span-full text-center text-gray-400 py-12">No events found.</div>
+                ) : (
+                  page.map((event) => (
+                    <div
+                      key={event.id}
+                      className="group bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden transition-transform hover:scale-[1.02] border border-gray-100 relative"
+                    >
+                      <img
+                        src={getImage(event)}
+                        alt={event.title}
+                        className="w-full h-40 object-cover object-center"
+                        draggable={false}
+                      />
+                      <div className="flex-1 flex flex-col p-4 gap-1">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg md:text-xl font-bold text-[var(--accent-color)] truncate">
+                            {event.title}
+                          </h3>
 
-                  </div>
-                  <span className="text-xs md:text-sm text-gray-600">
-                    {event.location || "Location to be announced"}
-                  </span>
-                  <span className="text-xs md:text-sm text-gray-500">
-                    {formatDateTime(event.startDate)}
-                  </span>
-                  <div className="flex items-center gap-2 flex-wrap mt-1">
-                    {activeFilter !== "completed" ? (
-                      <span className="text-[11px] md:text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
-                        Registered: {registrationCounts[event.id] ?? 0}
-                        {event.capacity ? ` / ${event.capacity}` : ""}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
-                  <button
-                    onClick={() =>
-                      navigate(`/events`, {
-                        state: { event },
-                      })
-                    }
-                    className="px-5 py-2 rounded-md bg-[var(--accent-color)] text-white font-semibold shadow-lg hover:bg-[var(--accent-color)]/90 transition-colors flex items-center gap-2"
-                  >
-                    See Details <FaExternalLinkAlt className="text-xs mb-[1px]" />
-                  </button>
-                </div>
+                        </div>
+                        <span className="text-xs md:text-sm text-gray-600">
+                          {event.location || "Location to be announced"}
+                        </span>
+                        <span className="text-xs md:text-sm text-gray-500">
+                          {formatDateTime(event.startDate)}
+                        </span>
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                          {activeFilter !== "completed" ? (
+                            <span className="text-[11px] md:text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-semibold">
+                              Registered: {registrationCounts[event.id] ?? 0}
+                              {event.capacity ? ` / ${event.capacity}` : ""}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
+                        <button
+                          onClick={() =>
+                            navigate(`/events`, {
+                              state: { event },
+                            })
+                          }
+                          className="px-5 py-2 rounded-md bg-[var(--accent-color)] text-white font-semibold shadow-lg hover:bg-[var(--accent-color)]/90 transition-colors flex items-center gap-2"
+                        >
+                          See Details <FaExternalLinkAlt className="text-xs mb-[1px]" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ))
-          )}
+            ))}
+          </div>
+
+          <button
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-10 h-10 items-center justify-center hover:bg-white transition"
+            onClick={handlePrev}
+            aria-label="Previous events"
+            disabled={loading || error}
+          >
+            ‹
+          </button>
+          <button
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 shadow rounded-full w-10 h-10 items-center justify-center hover:bg-white transition"
+            onClick={handleNext}
+            aria-label="Next events"
+            disabled={loading || error}
+          >
+            ›
+          </button>
         </div>
         <div className="flex justify-center w-full mt-8">
           {Array.from({ length: pageCount }).map((_, idx) => (

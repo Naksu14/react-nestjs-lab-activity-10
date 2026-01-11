@@ -20,6 +20,7 @@ import {
   getAllEventsByOrganizer,
   deleteEvent,
 } from "../../../services/organizerService";
+import { getCurrentUser } from "../../../services/authService";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
@@ -35,6 +36,11 @@ const MyEvent = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 6;
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => getCurrentUser(),
+  });
 
   const { data: organizerEvents } = useQuery({
     queryKey: ["organizerEvents"],
@@ -206,6 +212,13 @@ const MyEvent = () => {
                     >
                       {ev.status}
                     </div>
+
+                    {/* Admin Created Badge */}
+                    {ev.created_by_admin && (
+                      <div className="absolute top-6 left-6 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-purple-100 text-purple-600">
+                        Admin Created
+                      </div>
+                    )}
 
                     <div
                       className="space-y-4 cursor-pointer"

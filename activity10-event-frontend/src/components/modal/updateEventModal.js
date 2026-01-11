@@ -132,6 +132,7 @@ const UpdateEventModal = ({ isOpen, onClose, event }) => {
     try {
       await updateEvent(event.id, payload);
       queryClient.invalidateQueries(["organizerEvents"]);
+      queryClient.invalidateQueries(["adminEvents"]);
       onClose();
     } catch (error) {
       console.error("Error updating event:", error);

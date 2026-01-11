@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "../../../components/Header";
 import { getCurrentUser } from "../../../services/authService";
 import { getTicketsForUser, registerForEvent } from "../../../services/attendeesService";
+import { QRCodeCanvas } from "qrcode.react";
 
 const PAGE_SIZE = 5;
 
@@ -25,6 +26,8 @@ const AttendeeTickets = () => {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [qrTicketId, setQrTicketId] = useState(null);
+  const qrRef = useRef(null);
 
   /* ======================
      CURRENT USER
@@ -83,6 +86,16 @@ const AttendeeTickets = () => {
 
   const isLoading = userLoading || ticketsLoading;
 
+  const handleDownloadQr = () => {
+    if (!qrRef.current) return;
+    const canvas = qrRef.current.querySelector("canvas");
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "ticket-qr.png";
+    link.click();
+  };
+
   return (
     <div className="min-h-screen bg-white text-left">
       <Header />
@@ -120,7 +133,7 @@ const AttendeeTickets = () => {
                     <th className="px-4 py-3">End</th>
                     <th className="px-4 py-3">Location</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Ticket Code</th>
+                    <th className="px-4 py-3">QR</th>
                   </tr>
                 </thead>
 
@@ -163,12 +176,14 @@ const AttendeeTickets = () => {
                         </td>
 
                         <td
-                          className="px-4 py-3 font-mono text-xs text-gray-500 cursor-copy"
-                          onClick={() =>
-                            navigator.clipboard.writeText(ticket.ticket_code)
-                          }
+                          className="px-4 py-3"
                         >
-                          {ticket.ticket_code}
+                          <button
+                            className="px-3 py-1 text-xs border rounded hover:bg-gray-100"
+                            onClick={() => setQrTicketId(ticket.id)}
+                          >
+                            View QR
+                          </button>
                         </td>
                       </tr>
                     );
@@ -203,6 +218,30 @@ const AttendeeTickets = () => {
           </>
         )}
       </section>
+
+      {qrTicketId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm relative">
+            <button
+              className="absolute top-3 right-3 text-sm text-gray-500 hover:text-gray-700"
+              onClick={() => setQrTicketId(null)}
+            >
+              Close
+            </button>
+            <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Your Ticket QR</h3>
+            <div className="flex flex-col items-center gap-3" ref={qrRef}>
+              <QRCodeCanvas value={tickets.find((t) => t.id === qrTicketId)?.ticket_code || ""} size={200} includeMargin />
+              <p className="text-xs text-gray-500">Ticket code: {tickets.find((t) => t.id === qrTicketId)?.ticket_code}</p>
+              <button
+                className="px-4 py-2 text-sm rounded bg-[var(--accent-color)] text-white font-semibold shadow hover:bg-[var(--accent-color)]/90"
+                onClick={handleDownloadQr}
+              >
+                Download QR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -124,6 +124,7 @@ function EventReportsPage() {
                     })
                   : ''
               }
+              checkins={checkins.filter((c) => (c.event?.id ?? c.event_id) === selectedEventId)}
               registrations={registrations.filter((r) => (r.event?.id ?? r.event_id) === selectedEventId)}
               onClose={() => {
                 setShowAttendeesModal(false);

@@ -23,18 +23,11 @@ function ReportsStats({ summary }) {
       label: 'Total Check-ins',
       bgColor: 'bg-green-50 dark:bg-green-900/20',
       iconColor: 'text-green-600'
-    },
-    {
-      icon: <XCircle size={24} />,
-      value: String(summary?.noShows ?? 0),
-      label: 'No-shows',
-      bgColor: 'bg-red-50 dark:bg-red-900/20',
-      iconColor: 'text-red-600'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {stats.map((stat, index) => (
         <div
           key={index}

@@ -184,39 +184,57 @@ function ReportsFilters({ onDateRangeChange, onOrganizerChange, onStatusChange, 
           </div>
           {orgOpen && (
             <div className="absolute z-10 mt-2 w-full max-h-56 overflow-auto border border-[var(--border-color)] rounded-lg bg-[var(--bg-card)] shadow-lg">
-              <button
-                type="button"
-                onClick={() => { setOrganizer('all'); onOrganizerChange('all'); setOrgOpen(false); setOrgQuery('All Organizers'); }}
-                className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-[var(--bg-main)] text-[var(--text-primary)]"
-              >
-                <span>All Organizers</span>
-                <span className="text-xs text-[var(--text-muted)]">{totalEventsCount} events</span>
-              </button>
-              <div className="border-t border-[var(--border-color)]" />
               {isLoadingOrgs ? (
                 <div className="px-4 py-2 text-[var(--text-muted)] text-sm">Loading organizers...</div>
               ) : (
-                (organizers
-                  .filter((org) => {
+                (() => {
+                  const searchQuery = orgQuery.trim().toLowerCase();
+                  const showAllOrganizers = !searchQuery;
+                  
+                  const filteredOrganizers = organizers.filter((org) => {
                     const name = ((org.firstname || '') + ' ' + (org.lastname || '')).toLowerCase();
-                    return name.includes((orgQuery || '').toLowerCase());
-                  })
-                  .map((org) => {
-                    const name = ((org.firstname || '') + ' ' + (org.lastname || '')).trim() || org.email || `Organizer ${org.id}`;
-                    const count = organizerCounts.get ? (organizerCounts.get(org.id) || 0) : (organizerCounts[org.id] || 0);
+                    return name.includes(searchQuery);
+                  });
+
+                  if (!showAllOrganizers && filteredOrganizers.length === 0) {
                     return (
-                      <button
-                        key={org.id}
-                        type="button"
-                        onClick={() => { setOrganizer(org.id); onOrganizerChange(org.id); setOrgOpen(false); setOrgQuery(name); }}
-                        className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-[var(--bg-main)] text-[var(--text-primary)]"
-                      >
-                        <span>{name}</span>
-                        <span className="text-xs text-[var(--text-muted)]">{count} events</span>
-                      </button>
+                      <div className="px-4 py-2 text-[var(--text-muted)] text-sm">No organizers found</div>
                     );
-                  })
-                )
+                  }
+
+                  return (
+                    <>
+                      {showAllOrganizers && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => { setOrganizer('all'); onOrganizerChange('all'); setOrgOpen(false); setOrgQuery('All Organizers'); }}
+                            className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-[var(--bg-main)] text-[var(--text-primary)]"
+                          >
+                            <span>All Organizers</span>
+                            <span className="text-xs text-[var(--text-muted)]">{totalEventsCount} events</span>
+                          </button>
+                          <div className="border-t border-[var(--border-color)]" />
+                        </>
+                      )}
+                      {filteredOrganizers.map((org) => {
+                        const name = ((org.firstname || '') + ' ' + (org.lastname || '')).trim() || org.email || `Organizer ${org.id}`;
+                        const count = organizerCounts.get ? (organizerCounts.get(org.id) || 0) : (organizerCounts[org.id] || 0);
+                        return (
+                          <button
+                            key={org.id}
+                            type="button"
+                            onClick={() => { setOrganizer(org.id); onOrganizerChange(org.id); setOrgOpen(false); setOrgQuery(name); }}
+                            className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-[var(--bg-main)] text-[var(--text-primary)]"
+                          >
+                            <span>{name}</span>
+                            <span className="text-xs text-[var(--text-muted)]">{count} events</span>
+                          </button>
+                        );
+                      })}
+                    </>
+                  );
+                })()
               )}
             </div>
           )}

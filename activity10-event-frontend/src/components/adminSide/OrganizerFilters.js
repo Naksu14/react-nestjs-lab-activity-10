@@ -8,6 +8,7 @@ function OrganizerFilters({ onSearch, onStatusChange, onRoleChange }) {
   const [role, setRole] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const isArchivedView = status === 'archived';
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -34,87 +35,103 @@ function OrganizerFilters({ onSearch, onStatusChange, onRoleChange }) {
     <div className="flex flex-col gap-4 mb-6 mt-4">
       {/* Tabs and Search Row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-20">
           {/* Role Tabs */}
-          <div className="flex items-center gap-2">
-            {[
-              { value: 'all', label: 'All' },
-              { value: 'organizer', label: 'Organizers' },
-              { value: 'attendee', label: 'Attendees' },
-            ].map((item) => (
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold uppercase text-[var(--text-muted)]">Filter by role</span>
+            <div className="flex items-center gap-2">
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'organizer', label: 'Organizers' },
+                { value: 'attendee', label: 'Attendees' },
+              ].map((item) => (
+                <button
+                  title={`Show ${item.label.toLowerCase()} roles`}
+                  key={item.value}
+                  onClick={() => handleRoleChange(item.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    role === item.value
+                      ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
+                      : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status Tabs */}
+          {/* <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold uppercase text-[var(--text-muted)]">Filter by status</span>
+            <div className="flex items-center gap-2">
               <button
-                key={item.value}
-                onClick={() => handleRoleChange(item.value)}
+                title="Show active users"
+                onClick={() => handleStatusChange('active')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  role === item.value
+                  status === 'active'
                     ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
                     : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
                 }`}
               >
-                {item.label}
+                Active
               </button>
-            ))}
-          </div>
-
-          {/* Status Tabs */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleStatusChange('active')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                status === 'active'
-                  ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
-                  : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
-              }`}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => handleStatusChange('inactive')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                status === 'inactive'
-                  ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
-                  : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
-              }`}
-            >
-              Inactive
-            </button>
-            <button
-              onClick={() => handleStatusChange('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                status === 'all'
-                  ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
-                  : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
-              }`}
-            >
-              All
-            </button>
-          </div>
+              <button
+                title="Show inactive users"
+                onClick={() => handleStatusChange('inactive')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  status === 'inactive'
+                    ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
+                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+                }`}
+              >
+                Inactive
+              </button>
+              <button
+                title="Show all statuses"
+                onClick={() => handleStatusChange('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  status === 'all'
+                    ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20'
+                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+                }`}
+              >
+                All
+              </button>
+            </div>
+          </div> */}
         </div>
 
         {/* Right Side: Archived + Add Button */}
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <button
-              onClick={() => handleStatusChange('archived')}
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                status === 'archived'
-                  ? 'bg-gray-100 text-gray-800 border-2 border-gray-400'
-                  : 'bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              Archived
-            </button>
-            {showTooltip && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap z-50">
-                View archived users
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-              </div>
-            )}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-[var(--text-muted)]">
+              {isArchivedView ? 'Showing archived users' : 'Click to see archived users'}
+            </span>
+            <div className="relative">
+              <button
+                onClick={() => handleStatusChange(isArchivedView ? 'active' : 'archived')}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  status === 'archived'
+                    ? 'bg-gray-100 text-gray-800 border-2 border-gray-400'
+                    : 'bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)]'
+                }`}
+                title={isArchivedView ? 'Exit archived view and return to active users' : 'View archived users'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                {isArchivedView ? 'Back to active' : 'Archived'}
+              </button>
+              {showTooltip && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded shadow-lg whitespace-nowrap z-50">
+                  {isArchivedView ? 'Exit archived view' : 'View archived users'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              )}
+            </div>
           </div>
 
           <button className="flex items-center gap-2 px-5 py-2.5 bg-[var(--accent-color)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all hover:shadow-lg shadow-[var(--accent-color)]/20"

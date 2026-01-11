@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import { ArrowLeft, FileDown, Loader } from 'lucide-react';
 
-function EventAttendeesModal({ eventName, eventDate, eventStartTime, registrations = [], onClose }) {
+function EventAttendeesModal({ eventName, eventDate, eventStartTime, checkins = [], registrations = [], onClose }) {
   const [isExporting, setIsExporting] = useState(false);
-  // Prepare attendee data from registrations
-  const attendees = registrations.map((reg) => ({
-    name: `${reg.user?.firstname || ''} ${reg.user?.lastname || ''}`.trim() || reg.user?.email || 'Unknown',
-    email: reg.user?.email || 'N/A',
-    status: reg.registration_status || 'pending',
-    registeredAt: reg.created_at 
-      ? new Date(reg.created_at).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
-      : (reg.updated_at ? new Date(reg.updated_at).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : 'N/A'),
-  }));
+  // Prepare attendee data from check-ins
+  const attendees = checkins.map((checkin) => {
+    // Get user from ticket.registration.user (as per backend relations)
+    const user = checkin.ticket?.registration?.user;
+    
+    const name = user 
+      ? `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.email || 'Unknown'
+      : 'Unknown';
+    const email = user?.email || 'N/A';
+    
+    return {
+      name,
+      email,
+      status: checkin.scan_status || 'pending',
+      checkedInAt: checkin.scan_time 
+        ? new Date(checkin.scan_time).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+        : 'N/A',
+    };
+  });
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -19,7 +29,7 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
       // Simulate slight delay for better UX
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const headers = ['Name', 'Email', 'Status', 'Registered At'];
+      const headers = ['Name', 'Email', 'Status', 'Checked In At'];
       const csvContent = [
         ['Event:', eventName],
         ['Date:', eventDate],
@@ -32,7 +42,7 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
             attendee.name,
             attendee.email,
             attendee.status,
-            attendee.registeredAt,
+            attendee.checkedInAt,
           ]
             .map((v) => `"${String(v).replace(/"/g, '""')}"`)
             .join(',')
@@ -66,27 +76,29 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">Event Attendees</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">{eventName}</p>
         </div>
-        <button
-          onClick={handleExport}
-          disabled={isExporting}
-          className="flex items-center space-x-2 px-5 py-3 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: "var(--accent-color)",
-            color: "#fff",
-          }}
-        >
-          {isExporting ? (
-            <>
-              <Loader size={18} className="animate-spin" />
-              <span>Exporting...</span>
-            </>
-          ) : (
-            <>
-              <FileDown size={18} />
-              <span>Export</span>
-            </>
-          )}
-        </button>
+        {attendees.length > 0 && (
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center space-x-2 px-5 py-3 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: "var(--accent-color)",
+              color: "#fff",
+            }}
+          >
+            {isExporting ? (
+              <>
+                <Loader size={18} className="animate-spin" />
+                <span>Exporting...</span>
+              </>
+            ) : (
+              <>
+                <FileDown size={18} />
+                <span>Export</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Content - Scrollable */}
@@ -103,7 +115,7 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
               <p className="text-lg font-medium text-[var(--text-primary)] mt-1">{eventStartTime}</p>
             </div>
             <div>
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Total Attendees Registered</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Total Attendees Checked In</p>
               <p className="text-lg font-medium text-[var(--text-primary)] mt-1">{attendees.length}</p>
             </div>
           </div>
@@ -131,7 +143,7 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                    Registered At
+                    Checked In At
                   </th>
                 </tr>
               </thead>
@@ -151,9 +163,9 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
                       <td className="px-6 py-4 text-left">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            attendee.status.toLowerCase() === 'registered'
+                            attendee.status.toLowerCase() === 'success'
                               ? 'bg-green-100 text-green-800'
-                              : attendee.status.toLowerCase() === 'cancelled'
+                              : attendee.status.toLowerCase() === 'invalid'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-yellow-100 text-yellow-800'
                           }`}
@@ -162,14 +174,14 @@ function EventAttendeesModal({ eventName, eventDate, eventStartTime, registratio
                         </span>
                       </td>
                       <td className="px-6 py-4 text-left">
-                        <p className="text-sm text-[var(--text-muted)]">{attendee.registeredAt}</p>
+                        <p className="text-sm text-[var(--text-muted)]">{attendee.checkedInAt}</p>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td colSpan="4" className="px-6 py-8 text-center">
-                      <p className="text-[var(--text-muted)]">No attendees registered for this event.</p>
+                      <p className="text-[var(--text-muted)]">No attendees checked in for this event.</p>
                     </td>
                   </tr>
                 )}

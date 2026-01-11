@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
+import EditProfileModal from "../modal/EditProfileModal";
+import { getCurrentUser, updateUser } from "../../services/authService";
 
 const AdminTopNav = () => {
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("theme") === "dark"
   );
   const [userRole, setUserRole] = useState(null);
-  const [userName, setUserName] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     // Extract role from JWT token
@@ -23,6 +26,17 @@ const AdminTopNav = () => {
   }, []);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) setCurrentUser(user);
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     if (isDarkMode) {
       document.documentElement.setAttribute("data-theme", "dark");
       localStorage.setItem("theme", "dark");
@@ -32,11 +46,31 @@ const AdminTopNav = () => {
     }
   }, [isDarkMode]);
 
-  const displayName = userRole === 'admin' ? 'Admin' : 'User Name';
+  const fn = currentUser?.firstname || '';
+  const ln = currentUser?.lastname || '';
+  const displayName = (fn || ln) ? `${fn} ${ln}`.trim() : (userRole === 'admin' ? 'Admin' : 'User Name');
   const displayRole = userRole === 'admin' ? 'Admin Account' : 'Organizer Account';
-  const initials = userRole === 'admin' ? 'AD' : 'OP';
+  const initials = (fn || ln) ? `${fn.charAt(0)}${ln.charAt(0)}`.toUpperCase() : (userRole === 'admin' ? 'AD' : 'OP');
+
+  const handleSaveProfile = async (updated) => {
+    try {
+      if (currentUser?.id) {
+        const result = await updateUser(currentUser.id, updated);
+        if (result) {
+          setCurrentUser(result);
+        } else {
+          // fallback if result is empty
+          setCurrentUser({ ...currentUser, ...updated });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      throw err;
+    }
+  };
 
   return (
+    <>
     <header
       className="h-16 border flex justify-end items-center px-8 sticky top-0 z-10 backdrop-blur-md rounded-lg m-1"
       style={{
@@ -64,7 +98,7 @@ const AdminTopNav = () => {
 
         <div className="h-8 w-[1px] mx-2" style={{ backgroundColor: 'var(--border-color)'}}></div>
 
-        <button className="flex items-center space-x-3 group">
+        <button className="flex items-center space-x-3 group" onClick={() => setIsProfileOpen(true)}>
           <div className="text-right hidden sm:block">
             <p className="text-xs font-bold leading-tight">{displayName}</p>
             <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{displayRole}</p>
@@ -75,6 +109,18 @@ const AdminTopNav = () => {
         </button>
       </div>
     </header>
+    <EditProfileModal
+      isOpen={isProfileOpen}
+      onClose={() => setIsProfileOpen(false)}
+      role={userRole || 'user'}
+      initialData={{
+        firstname: currentUser?.firstname || '',
+        lastname: currentUser?.lastname || '',
+        email: currentUser?.email || ''
+      }}
+      onSave={handleSaveProfile}
+    />
+    </>
   );
 };
 

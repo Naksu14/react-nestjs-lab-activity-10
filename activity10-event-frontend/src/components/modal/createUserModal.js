@@ -155,7 +155,7 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <h2 className="text-xl font-semibold mb-6 text-[var(--text-primary)]">
+        <h2 className="text-xl font-semibold mb-6 text-[var(--text-primary)] text-left">
           {isViewMode ? 'View Organizer' : isEditMode ? 'Edit Organizer' : 'Add Organizer'}
         </h2>
         {isViewMode && (
@@ -165,7 +165,7 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="firstname">
+            <label className="block text-left text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="firstname">
               First Name
             </label>
             <input
@@ -184,7 +184,7 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
             {errors.firstname && <span id="firstname-error" className="text-xs text-red-500">{errors.firstname}</span>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="lastname">
+            <label className="block text-left text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="lastname">
               Last Name
             </label>
             <input
@@ -202,10 +202,10 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
             {errors.lastname && <span id="lastname-error" className="text-xs text-red-500">{errors.lastname}</span>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="email">
+            <label className="block text-left text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="email">
               Email
             </label>
-            <p className="text-xs text-[var(--text-muted)] mb-2">Please enter a valid email address (e.g., organizer@example.com)</p>
+            <p className="text-xs text-left text-[var(--text-muted)] mb-2">Please enter a valid email address (e.g., organizer@example.com)</p>
             <input
               type="email"
               name="email"
@@ -222,7 +222,7 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
           </div>
           {!isViewMode && (
             <div>
-              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="password">
+              <label className="block text-left text-sm font-medium text-[var(--text-muted)] mb-1" htmlFor="password">
                 Password
               </label>
               {isEditMode && (
@@ -230,8 +230,8 @@ function CreateOrganizerModal({ isOpen, onClose, onCreate, organizer = null }) {
                   💡 Leave blank to keep current password
                 </p>
               )}
-              <p className="text-xs text-[var(--text-muted)] mb-2">Strong password required:</p>
-              <div className="space-y-1 mb-2 text-xs">
+              <p className="text-xs text-left text-[var(--text-muted)] mb-2">Strong password required:</p>
+              <div className="space-y-1 mb-2 text-xs text-left">
                 <div style={{ color: getPasswordRequirements().minLength ? 'var(--accent-color)' : 'var(--text-muted)' }}>
                   {getPasswordRequirements().minLength ? '✓' : '○'} Minimum 8 characters
                 </div>

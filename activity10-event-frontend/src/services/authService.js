@@ -61,3 +61,18 @@ export const createNewUser = async (userInfo) => {
   return data;
 };
 
+// UPDATE USER PROFILE
+export const updateUser = async (id, userData) => {
+  const token = localStorage.getItem("authToken");
+  try {
+    const { data } = await api.patch(`/event-users/update/${id}`, userData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data;
+  } catch (err) {
+    console.error("Error updating user:", err);
+    throw err;
+  }
+};

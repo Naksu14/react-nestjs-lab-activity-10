@@ -468,14 +468,3 @@ This project is for educational purposes as part of ITEC-116 Laboratory Activiti
 
 ---
 
-## 👥 Contributors
-
-- Activity 10 Development Team
-
----
-
-<div align="center">
-
-**Made with ❤️ using NestJS & React**
-
-</div>
